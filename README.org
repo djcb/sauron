@@ -1,6 +1,6 @@
 * sauron
 
-  *WARNING* *HUOM* sauron is in its early stages of development (basicly, one
+  *WARNING/HUOM* sauron is in its early stages of development (basicly, one
    evening of hacking. It's not ready for general consumption.
 
 ** but what is it?
@@ -26,5 +26,65 @@
   Needless to say (but I do it anyway), there is a fine balance between
   getting the useful messages and /spam/, and that balance differs from person
   to person.
-
+  
+** customization
    
+   Now, you can make sauron give you the behaviour you like; you can do this,
+   by implementing some hook-functions.
+
+*** blocking events
+    
+    Before events are added to the list, you can check them using the hook
+    =sauron-event-block-functions=. If any of the hook-functions return
+    non-nil, the event will be blocked. Example:
+
+#+begin_src emacs-lisp
+(add-hook 'sauron-event-block-functions
+  (lambda (origin event-type priority msg)
+    (or
+      (string-match "^*** Users" msg) ;; Ignore ERC user lists
+      ;; other matchers
+     )))
+#+end_example
+
+    After events have been added to the list, another hook is called:
+    =sauron-event-added-functions=. This is place to add sound effects,
+    notifications and so on. To make this easy, a few convenience functions
+    are provided:
+    - ~sauron-sox~ (play a sound using 'sox')
+    - ~sauron-aplay~ (play a sound using 'aplay')
+    - ~sauron-gnome-osd~ (pops up some letters on your screen)
+    - ~sauron-zenity~ (pop up a zenity window)
+    Now our, function can look something like:
+
+#+begin_src emacs-lisp
+(add-hook 'sauron-event-added-functions
+  (lambda (origin event-type prio msg)
+    (if (string-match "ping" msg)
+      (sauron-sox "/common/sounds/ping.wav")
+      (sauron-sox "/common/sounds/something-happened.wav"))
+    (if (>= prio 4)
+      (progn
+	(sauron-sox "/common/sounds/uhoh.wav")
+	(sauron-gnome-osd (concat event-type "@" origin ": " msg) 10)))))
+#+end_src
+  
+      
+** adding new modules
+   
+   It may be interesting to track other modules as well; this shouldn't be too
+   hard. Suppose we have a module 'foo':
+
+   - create "sauron-foo.el", and make sure it's in the load-path
+   - sauron-foo should implement at least:
+     + ~sauron-foo-start~ to start the module
+     + ~sauron-foo-stop~ to stop the module / cleanup etc.
+   - add sauron-foo.el with =(provide 'sauron-foo)=
+   - now, add ~sauron-foo~ to your ~sauron-modules~
+
+   Now, to actually make your module useful, you'd want to add some event is
+   something happens. This is done using =sauron-add-event= (see it's
+   documentation). The first parameter should be =foo=.
+
+    
+
