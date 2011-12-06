@@ -30,7 +30,8 @@
 
 (defvar sauron-modules
   '(sauron-erc
-    sauron-dbus)
+    sauron-dbus
+     sauron-org)
   "List of sauron modules to use. Currently supported are:
 sauron-erc and sauron-dbus.")
 
@@ -305,5 +306,26 @@ sauron buffer."
     (error "sox not found"))
   (call-process "sox" nil 0 nil "--volume=9" "-V0" "-q" path "-d"))
 
+(defun sauron-gnome-osd (msg secs)
+  "Display MSG on your screen for SECS second... for really important stuff."
+  (unless (executable-find "gnome-osd-client")
+    (error "gnome-osd-client not found"))
+  (let ((xmlmsg
+	  (concat ;; weird XML... but this should work
+	    "<message id=\"sauron\" osd_vposition=\"center\" osd_halignment=\"left\" "
+	    "osd_fake_translucent_bg=\"on\" "
+	    "hide_timeout=\"" (format "%d" (* 1000 secs)) "\">"
+	    msg
+	    "</message>")))
+    (message "%s" xmlmsg)
+    (call-process "gnome-osd-client" nil 0 nil "-f" "--dbus" xmlmsg)))
 
+(defun sauron-zenity (msg)
+  "Pop-up a zenity window with MSG."
+  (unless (executable-find "zenity")
+    (error "zenity not found"))
+  (call-process "zenity" nil 0 nil "--info" "--title=Sauron"
+    (concat "--text=" msg)))
+ 
+  
 (provide 'sauron)
