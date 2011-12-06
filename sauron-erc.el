@@ -42,7 +42,7 @@
 (defun sr-erc-handler (match-type nick msg channel)
   "Handler function for ERC messages."
   (sauron-add-event
-    "ERC"
+    "erc"
     (format "%S" match-type)
     3 ;; priority
     (lexical-let ((channel channel))
