@@ -35,9 +35,9 @@
 
 (defun sauron-org-start ()
   "Start watching Org (or appt, really)."
-  (when sauron-org-old-appt-func
-    (error "sauron-org is already started."))
-  (setq sauron-org-old-appt-func appt-disp-window-function)
+  (unless sauron-org-old-appt-func
+    (when (boundp appt-disp-window-function)
+      (setq sauron-org-old-appt-func )))
   (setq appt-disp-window-function (function sr-org-handler-func)))
   
 (defun sauron-org-stop ()
@@ -47,9 +47,18 @@
 
 (defun sr-org-handler-func (minutes-to-app new-time msg)
   "Handle appointment reminders. FIXME: apparently these params
-could lists, too."
-  (sauron-add-event "org" "reminder" 4 'org-agenda-list
-    (concat "%s minutes left before %s"
-      minutes-to-app msg)))
-    
+could be lists, too."
+  (let* ((left (string-to-number minutes-to-app))
+	  (prio ;; priorities, hard-coded....
+	    (cond
+	      ((> left 15) 3)
+	      ((> left 10) 4)
+	      ((< left 10) 5))))
+    (sauron-add-event "org" "reminder" prio 'org-agenda-list
+      (concat "%s minutes left before %s"
+      minutes-to-app msg))
+    ;; call the old function as well, if defined
+    (when sauron-org-old-appt-func
+      (funcall sauron-org-old-appt-func minutes-to-app new-time msg))))
+  
 (provide 'sauron-org)  
