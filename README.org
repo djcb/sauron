@@ -1,0 +1,30 @@
+* sauron
+
+  *WARNING* *HUOM* sauron is in its early stages of development (basicly, one
+   evening of hacking. It's not ready for general consumption.
+
+** but what is it?
+
+  sauron is an emacs mode for keeping track of what goes on in the world
+  behind you. Modern desktop environments have all kinds of fancy widgets
+  etc. that steal my attention (or sometimes not enough), so I figured it's
+  better to have emacs give me buffer which list all the important events.
+
+  What kind of events? Well, sauron started because during my work, I need to
+  track a lot of IRC channels. I'm using [[http://www.emacswiki.org/emacs/ERC][ERC]] as my IRC-client, and it's not
+  always totally obvious is someone 'pinged' me in some channel. It provides a
+  number of hooks, but I wasn't able to make them behave the way I like --
+  that is, give me a short description of what's happening, and teleport me to
+  the channel in question at the click of a button (later I found, ERC may
+  actually have some built-ins capable of that, but alas...)
+
+  So, I started writing Sauron as the über hook function to deal with ERC
+  channel, when it occured to me that I could actually do it a bit more
+  general -- say, warn me of new e-mails, if a torrent has completed, and so
+  on.
+
+  Needless to say (but I do it anyway), there is a fine balance between
+  getting the useful messages and /spam/, and that balance differs from person
+  to person.
+
+   
