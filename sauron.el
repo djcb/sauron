@@ -26,9 +26,6 @@
 ;;; Commentary:
 
 ;;; Code:
-
-(add-to-list 'load-path "/home/djcb/Sources/sauron") ;; FIXME
-
 (eval-when-compile (require 'cl))
 
 (defvar sauron-modules
@@ -55,6 +52,27 @@ sauron-erc and sauron-dbus.")
 (defvar sauron-max-line-length 80
   "Maximum length of messages in the log (longer messages will be
   truncated. If set to nil, there is no maximum.")
+
+(defvar sauron-event-block-functions nil
+  "Hook to be called *before* an event is added. If all of the
+hooked functions return nil, the event is allowed to be added. The
+function takes the following arguments:
+  (ORIGIN EVENT-TYPE PRIORITY MSG), where
+ORIGIN is a string denoting the ORIGIN of the event
+EVENT-TYPE is a string denoting the type of event
+PRIORITY is an integer [1..5] describing the priority of the event
+MSG is the message.
+If the hook is not set, all events are allowed.")
+
+(defvar sauron-event-added-functions nil
+  "Hook to be called *after* an event is added. If any of the hook
+functions return non-nil, the event is blocked from being
+added. The hook function takes the following arguments:
+  (ORIGIN EVENT-TYPE PRIORITY MSG), where
+ORIGIN is a string denoting the ORIGIN of the event
+EVENT-TYPE is a string denoting the type of event
+PRIORITY is an integer [1..5] describing the priority of the event
+MSG is the message.")
 
 ;;  faces; re-using the font-lock stuff...
 
@@ -123,6 +141,7 @@ sauron-erc and sauron-dbus.")
   (sauron-hide))
 
 
+
 (defun sauron-add-event (origin event-type priority callback
 			  frm &rest params)
   "Add a new event to the Sauron log with ORIGIN (e.g., \"erc\")
@@ -132,29 +151,35 @@ sauron-erc and sauron-dbus.")
   non-nil a function to be called when user activates the event in
   the log, and FRM a format parameter, with optional PARAMS with
   the usual meaning."
-  (let* ((msg (apply 'format frm params))
-	  (line (format-spec sauron-event-format
-		(format-spec-make
-		  ?o (propertize origin 'face 'sauron-origin-face)
-		  ?p (propertize (format "%d" priority))
-		  ?e (propertize event-type 'face 'sauron-event-type-face)
-		  ?t (propertize (format-time-string sauron-timestamp-format
-				   (current-time)) 'face 'sauron-timestamp-face)
-		  ?m (propertize msg 'face 'sauron-message-face))))
-	  ;; add the callback as a text property, remove any embedded newlines,
-	  ;; truncate if necessary append a newline
-	  (line (concat 
-		  (truncate-string-to-width 
-		    (propertize (replace-regexp-in-string "\n" " " line)
-		      'callback callback)
-		    sauron-max-line-length 0 nil t)
-		  "\n"))
-	  (inhibit-read-only t))
-    (sr-create-buffer-maybe) ;; create log if it did not exist yet
-    (with-current-buffer sr-buffer
-      (goto-char (point-max))
-      (insert line))))
-
+  (let ((msg (apply 'format frm params)))
+    ;; we allow this even only if `sauron-event-block-functions' is nil, or all
+    ;; of the functions return nil (ie. 'success' here means blocking)
+    (unless (run-hook-with-args-until-success 'sauron-event-block-functions
+	      origin event-type priority msg)
+      (let* ((line (format-spec sauron-event-format
+		     (format-spec-make
+		       ?o (propertize origin 'face 'sauron-origin-face)
+		       ?p (propertize (format "%d" priority))
+		       ?e (propertize event-type 'face 'sauron-event-type-face)
+		       ?t (propertize (format-time-string sauron-timestamp-format
+					(current-time)) 'face 'sauron-timestamp-face)
+		       ?m (propertize msg 'face 'sauron-message-face))))
+	      ;; add the callback as a text property, remove any embedded newlines,
+	      ;; truncate if necessary append a newline
+	      (line (concat 
+		      (truncate-string-to-width 
+			(propertize (replace-regexp-in-string "\n" " " line)
+			  'callback callback)
+			sauron-max-line-length 0 nil t)
+		      "\n"))
+	      (inhibit-read-only t))
+	(sr-create-buffer-maybe) ;; create log if it did not exist yet
+	(with-current-buffer sr-buffer
+	  (goto-char (point-max))
+	  (insert line))
+	(run-hook-with-args 'sauron-event-added-functions 
+	  origin event-type priority msg)))))
+  
 (defun sauron-activate-event ()
   "Activate the callback for the current sauron line, and remove
 any special faces from the line."
@@ -261,5 +286,24 @@ sauron buffer."
     (with-current-buffer sr-buffer
       (sauron-mode)))
   sr-buffer)
+
+
+;; some helper function for writing event hooks
+(defun sauron-aplay (path)
+  "Play a wav-file at PATH using program aplay."
+  (unless (and (file-readable-p path) (file-regular-p path))
+    (error "%s is not a playable file" path))
+  (unless (executable-find "aplay")
+    (error "aplay not found"))
+  (call-process "aplay" nil 0 nil "-q" "-N" path))
+
+(defun sauron-sox (path)
+  "Play a wav-file at PATH using program sox."
+  (unless (and (file-readable-p path) (file-regular-p path))
+    (error "%s is not a playable file" path))
+  (unless (executable-find "sox")
+    (error "sox not found"))
+  (call-process "sox" nil 0 nil "--volume=9" "-V0" "-q" path "-d"))
+
 
 (provide 'sauron)
