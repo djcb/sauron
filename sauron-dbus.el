@@ -31,8 +31,8 @@
 
 ;; function sauron-url () {
 ;;     # --print-reply
-;;     dbus-send --session          	\
-;;     --dest="org.gnu.Emacs.Sauron"	\
+;;     dbus-send --session          	   \
+;;     --dest="org.gnu.Emacs"		   \
 ;;      "/org/gnu/Emacs/Sauron"            \
 ;;     "org.gnu.Emacs.Sauron.AddUrlEvent"  \
 ;;     string:shell string:url string:"$1" string:"$1"
@@ -41,8 +41,8 @@
 ;; # send message to sauron...
 ;; function sauron-msg () {
 ;;     # --print-reply
-;;     dbus-send --session          	    \
-;;     --dest="org.gnu.Emacs.Sauron"	    \
+;;     dbus-send --session          	       \
+;;     --dest="org.gnu.Emacs"		       \
 ;;      "/org/gnu/Emacs/Sauron"                \
 ;;     "org.gnu.Emacs.Sauron.AddMsgEvent"      \
 ;;     string:shell string:msg string:"$1"
