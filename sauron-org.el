@@ -36,7 +36,7 @@
 (defun sauron-org-start ()
   "Start watching Org (or appt, really)."
   (unless sauron-org-old-appt-func
-    (when (boundp appt-disp-window-function)
+    (when (boundp 'appt-disp-window-function)
       (setq sauron-org-old-appt-func )))
   (setq appt-disp-window-function (function sr-org-handler-func)))
   
@@ -55,8 +55,7 @@ could be lists, too."
 	      ((> left 10) 4)
 	      ((< left 10) 5))))
     (sauron-add-event "org" "reminder" prio 'org-agenda-list
-      (concat "%s minutes left before %s"
-      minutes-to-app msg))
+      (format "%s minutes left before %s" minutes-to-app msg))
     ;; call the old function as well, if defined
     (when sauron-org-old-appt-func
       (funcall sauron-org-old-appt-func minutes-to-app new-time msg))))
