@@ -317,7 +317,6 @@ sauron buffer."
 	    "hide_timeout=\"" (format "%d" (* 1000 secs)) "\">"
 	    msg
 	    "</message>")))
-    (message "%s" xmlmsg)
     (call-process "gnome-osd-client" nil 0 nil "-f" "--dbus" xmlmsg)))
 
 (defun sauron-zenity (msg)
