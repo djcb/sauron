@@ -30,24 +30,42 @@
 
 (defun sauron-erc-start ()
   "Start watching ERC."
-  (add-hook 'erc-text-matched-hook
-    (lambda (match-type nick msg)
-      (when (memq match-type '(current-nick keyword pal))
-	(sr-erc-handler match-type nick msg (buffer-name))))))
+  ;; the match hook
+  (add-hook 'erc-text-matched-hook 'sr-erc-text-matched-hook-func)
+  (add-hook 'erc-server-PRIVMSG-functions 'sr-erc-PRIVMSG-hook-func))
+ 
 
 (defun sauron-erc-stop ()
   "Stop watching ERC."
-  (remove-hook 'erc-text-matched-hook 'sr-erc-handler))
+  (remove-hook 'erc-text-matched-hook 'sr-erc-text-matched-hook-func)
+  (remove-hook 'erc-server-PRIVMSG-functions 'sr-erc-PRIVMSG-hook-func))
+
+(defun sr-erc-text-matched-hook-func (match-type nick msg)
+  "Hook function, to be called for erc-matched-hook."
+  (when (memq match-type '(current-nick keyword pal))
+    (sr-erc-handler match-type nick msg (buffer-name))))
+
+(defun sr-erc-PRIVMSG-hook-func (proc parsed)
+  "Hook function, to be called for erc-matched-hook."
+  (let ((nick (car (erc-parse-user (erc-response.sender parsed))))
+        (target (car (erc-response.command-args parsed)))
+        (msg (erc-response.contents parsed)))
+    (when (erc-current-nick-p target)
+      (sr-erc-handler "privmsg" nick msg nick))))
 
 (defun sr-erc-handler (match-type nick msg channel)
   "Handler function for ERC messages."
-  (sauron-add-event
-    "erc"
-    (format "%S" match-type)
-    3 ;; priority
-    (lexical-let ((channel channel))
-      (lambda() (sauron-switch-to-buffer channel)))
-    msg))
-
-
+  (let* ((msg (format "%s:%s" nick msg)))
+    ;; remove all the text properties, it seems there are a lot
+    (set-text-properties 0 (length msg) nil msg)
+    (sauron-add-event
+      "erc"
+      (format "%S" match-type)
+      3 ;; priority
+      (lexical-let ((channel channel))
+	(lambda() (sauron-switch-to-buffer channel)))
+      msg)))
+  
 (provide 'sauron-erc)
+
+
