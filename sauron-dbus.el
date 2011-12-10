@@ -1,4 +1,3 @@
-
 ;;; sauron -- enhanced tracking of the world inside and outside your emacs
 ;;; buffers. 
 ;;
@@ -51,10 +50,7 @@
 
 ;;; Code:
 
-(require 'dbus)
-
-(defvar sr-dbus-handler nil
-  "*internal* The D-bus handler function.")
+(require 'dbus nil 'noerror)
 
 (defconst sr-dbus-service dbus-service-emacs
   "*internal* the D-bus service name for sauron.")
@@ -67,38 +63,40 @@
   (concat sr-dbus-service ".Sauron")
   "*internal* the D-bus interface for sauron.")
 
+(defvar sr-dbus-running nil
+  "*internal* Whether the dbus backend is running.")
+
 (defun sauron-dbus-start ()
   "Start listening for sauron dbus messages."
-  (interactive)
-  (when sr-dbus-handler
-    (error "d-bus handler already defined"))
-  (setq sr-dbus-handler
+  (if (not (boundp 'dbus-path-emacs))
+    (message "sauron-dbus not available")
+    (unless sr-dbus-running
+      (dbus-register-method
+	:session               ;; use the session bus
+	sr-dbus-service        ;; ie. org.gnu.Emacs
+	sr-dbus-path           ;; ie. /org/gnu/Emacs/Sauron
+	sr-dbus-interface      ;; ie. org.gnu.Emacs.Sauron
+	"AddUrlEvent"          ;; method name
+	'sr-dbus-add-url-event ;; handler function
+	))
     (dbus-register-method
       :session               ;; use the session bus
       sr-dbus-service        ;; ie. org.gnu.Emacs
       sr-dbus-path           ;; ie. /org/gnu/Emacs/Sauron
       sr-dbus-interface      ;; ie. org.gnu.Emacs.Sauron
-      "AddUrlEvent"          ;; method name
-      'sr-dbus-add-url-event ;; handler function
-      ))
-  (dbus-register-method
-    :session               ;; use the session bus
-    sr-dbus-service        ;; ie. org.gnu.Emacs
-    sr-dbus-path           ;; ie. /org/gnu/Emacs/Sauron
-    sr-dbus-interface      ;; ie. org.gnu.Emacs.Sauron
-    "AddMsgEvent"          ;; method name
-    'sr-dbus-add-msg-event ;; handler function
-    )
-  ;; make it introspectable ==> FIXME: doesn't work; hmmm...
-  (dbus-register-method
-    :session
-    sr-dbus-service
-    sr-dbus-path
-    dbus-interface-introspectable
-    "Introspect"
-    (lambda () ;; return the introspection XML for our object" 
-      (concat  ;; 
-  "<!DOCTYPE node PUBLIC \"-//freedesktop//DTD D-BUS Object Introspection 1.0//EN\"
+      "AddMsgEvent"          ;; method name
+      'sr-dbus-add-msg-event ;; handler function
+      )
+    ;; make it introspectable ==> FIXME: doesn't work; hmmm...
+    (dbus-register-method
+      :session
+      sr-dbus-service
+      sr-dbus-path
+      dbus-interface-introspectable
+      "Introspect"
+      (lambda () ;; return the introspection XML for our object" 
+	(concat  ;; 
+	  "<!DOCTYPE node PUBLIC \"-//freedesktop//DTD D-BUS Object Introspection 1.0//EN\"
          \"http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd\">
         <node name=\"" sr-dbus-path "\"> 
           <interface name=\"" sr-dbus-interface "\">
@@ -114,11 +112,14 @@
               <arg name=\"message\"  type=\"s\" direction=\"in\"/>
              </method>
           </interface>
-       </node>"))))
+       </node>")))))
 
-(defun sr-url-handler (url)
-  (lexical-let ((url url))
-    (lambda() (browse-url url))))
+(defun sauron-dbus-stop ()
+  "Stop listening for dbus messages."
+  (when sr-dbus-running
+    (dbus-unregister-service :session sr-dbus-service)
+    (setq sr-dbus-running nil)))
+
 
 (defun sr-dbus-add-url-event (origin prio message url)
   "Add a dbus-originated event."
@@ -145,16 +146,6 @@
       (lambda() (message "%s" msg)))
     `(:origin origin))
   '(:boolean t))
-
-
-(defun sauron-dbus-stop ()
-  "Stop listening for dbus messages."
-  (interactive)
-  (unless sr-dbus-handler
-    (error "no dbus-handler defined"))
-  (dbus-unregister-object sr-dbus-handler)
-  (dbus-unregister-service :session sr-dbus-service)
-  (setq sr-dbus-handler nil))
 
 (provide 'sauron-dbus)
 

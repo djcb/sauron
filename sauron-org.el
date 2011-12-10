@@ -26,24 +26,33 @@
 ;;; Commentary:
 
 ;;; Code:
+(require 'appt nil 'noerror)
 (eval-when-compile (require 'cl))
 
 ;; this is really about 'appt', not 'org', but anyway...
 
-(defvar sauron-org-old-appt-func nil
-  "(*internal* The old org appt function.")
+(defvar sr-org-old-appt-func nil
+  "*internal* The old org appt function.")
+
+(defvar sr-org-running nil
+  "*internal* Whether the org-backend is active.")
+
 
 (defun sauron-org-start ()
-  "Start watching Org (or appt, really)."
-  (unless sauron-org-old-appt-func
-    (when (boundp 'appt-disp-window-function)
-      (setq sauron-org-old-appt-func )))
-  (setq appt-disp-window-function (function sr-org-handler-func)))
-  
+  "Start watching org (appt)."
+  (if (not (boundp 'appt-disp-window))
+    (message "sauron-org not available")
+    (unless sr-org-running
+      (setq ;; save the old one, set the new one
+	sr-org-old-appt-func appt-disp-window-function
+	appt-disp-window-function (function sr-org-handler-func)
+	sr-org-running t))))
+
 (defun sauron-org-stop ()
   "Stop checking appointments; restore the old function."
-  (setq appt-disp-window-function
-    (function sauron-org-old-appt-func)))
+  (when sr-org-running
+    (setq appt-disp-window-function
+      (function sr-org-old-appt-func))))
 
 (defun sr-org-handler-func (minutes-to-app new-time msg)
   "Handle appointment reminders. FIXME: apparently these params

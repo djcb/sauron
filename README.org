@@ -1,12 +1,12 @@
 * sauron
 
-  *WARNING/HUOM* sauron is in its early stages of development (basicly, one
-   evening of hacking. It's not ready for general consumption.
+  *WARNING* sauron is in its early stages of development. Okay, now I warned
+   you.
 
-** but what is it?
+** what is it?
 
   sauron is an emacs mode for keeping track of what goes on in the world
-  behind you. Modern desktop environments have all kinds of fancy widgets
+  around you. Modern desktop environments have all kinds of fancy widgets
   etc. that steal my attention (or sometimes not enough), so I figured it's
   better to have emacs give me buffer which list all the important events.
 
@@ -26,7 +26,34 @@
   Needless to say (but I do it anyway), there is a fine balance between
   getting the useful messages and /spam/, and that balance differs from person
   to person.
-  
+
+** getting started
+
+   After you've put the various sauron files in a directory, you can enable it
+   with something like the following in your =.emacs=:
+
+   ;; set load path, obviously replace "<path-to-sauron-dir>" with the actual path...
+#+being_example
+:   (add-to-list 'load-path "<path-to-sauron-dir>")
+:   (require 'sauron)
+#end_example
+   
+   Now, you can start sauron with... =M-x sauron-start=, and stop it with =M-x
+   sauron-stop=.
+
+   =sauron-start= will pop-up a new frame which will show events coming from any
+   of its sources (i.e.., ERC, org-mode appointments and over d-bus). You can
+   'activate' a source by pressing "Enter" with the cursor on the event, which
+   will then take some backend-specific action. For example, for the
+   ERC-backend, it will transfer you to the buffer (IRC-channel) where said
+   event happened.
+
+   Sauron (by default) loads the =sauron-erc=, =sauron-org= and =sauron-dbus=
+   modules; if you don't have ERC, org-mode or d-bus support, these will simply
+   be ignored. If so desired, you can customize =sauron-modules=. See below for
+   some specifics about the backends.
+   
+
 ** customization
    
    I've tried hard to come up with reasonable defaults, such that users can get
@@ -68,12 +95,12 @@
     documentation for a general introduction to hook functions, here's an
     example:
 #+begin_example
-(add-hook 'sauron-event-block-functions
-  (lambda (origin prio msg &optional props)
-    (or
-      (string-match "foo" msg) ;; ignore events that match 'foo' 
-      ;; other matchers
-     )))
+:(add-hook 'sauron-event-block-functions
+:  (lambda (origin prio msg &optional props)
+:    (or
+:      (string-match "foo" msg) ;; ignore events that match 'foo' 
+:      ;; other matchers
+:     )))
 #+end_example
 
     Note that the =props= parameter is a backend specific property-list, which
@@ -102,16 +129,27 @@
     Now our, function can look something like:
 
 #+begin_example
-(add-hook 'sauron-event-added-functions
-  (lambda (origin prio msg &optional props)
-    (if (string-match "ping" msg)
-      (sauron-sox "/common/sounds/ping.wav")
-      (sauron-sox "/common/sounds/something-happened.wav"))
-    (if (>= prio 4)
-      (progn
-	(sauron-sox "/common/sounds/uhoh.wav")
-	(sauron-gnome-osd (concat event-type "@" origin ": " msg) 10)))))
+:(add-hook 'sauron-event-added-functions
+:  (lambda (origin prio msg &optional props)
+:    (if (string-match "ping" msg)
+:      (sauron-sox "/common/sounds/ping.wav")
+:      (sauron-sox "/common/sounds/something-happened.wav"))
+:    (if (>= prio 4)
+:      (progn
+:	(sauron-sox "/common/sounds/uhoh.wav")
+:	(sauron-gnome-osd (concat event-type "@" origin ": " msg) 10)))))
 #+end_example
+
+** the backend modules
+
+   TBD
+
+*** erc
+
+*** org-mode / appt
+
+*** d-bus
+
        
 ** adding new modules
    

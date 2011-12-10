@@ -25,7 +25,7 @@
 ;;; Commentary:
 
 ;;; Code:
-(require 'erc)
+(require 'erc nil 'noerror)
 (eval-when-compile (require 'cl))
 
 (defvar sauron-erc-interesting-events
@@ -39,19 +39,22 @@ The following events are erc-track
 - keyword:       some keyword mentioned in ERC.")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(defvar sr-erc-hook-functions 
-  '( (erc-text-matched-hook        . sr-erc-text-matched-hook-func)
-     (erc-server-PRIVMSG-functions . sr-erc-PRIVMSG-hook-func))
-  "*internal* Hook functions to add/remove.")
+(defvar sr-erc-running nil
+  "*internal* Whether sauron erc is running.")
 
 (defun sauron-erc-start ()
   "Start watching ERC."
-  (add-hook 'erc-server-PRIVMSG-functions 'sr-erc-PRIVMSG-hook-func))
-  
+  (if (not (boundp 'erc-version-string))
+    (message "sauron-erc not available")
+    (unless sr-erc-running
+      (add-hook 'erc-server-PRIVMSG-functions 'sr-erc-PRIVMSG-hook-func)
+      (setq sr-erc-running t))))
+
 (defun sauron-erc-stop ()
   "Stop watching ERC."
-  (add-hook 'erc-server-PRIVMSG-functions 'sr-erc-PRIVMSG-hook-func))
+  (when sr-erc-running
+    (remove-hook 'erc-server-PRIVMSG-functions 'sr-erc-PRIVMSG-hook-func)
+    (setq sr-erc-running nil)))
     
 (defun sr-erc-PRIVMSG-hook-func (proc parsed)
   "Hook function, to be called for erc-matched-hook."
