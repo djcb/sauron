@@ -1,3 +1,4 @@
+
 ;;; sauron -- enhanced tracking of the world inside and outside your emacs
 ;;; buffers. 
 ;;
@@ -35,7 +36,7 @@
 ;;     --dest="org.gnu.Emacs"		   \
 ;;      "/org/gnu/Emacs/Sauron"            \
 ;;     "org.gnu.Emacs.Sauron.AddUrlEvent"  \
-;;     string:shell string:url string:"$1" string:"$1"
+;;     string:shell uint32:3 string:url string:"$1"
 ;; }
 
 ;; # send message to sauron...
@@ -45,7 +46,7 @@
 ;;     --dest="org.gnu.Emacs"		       \
 ;;      "/org/gnu/Emacs/Sauron"                \
 ;;     "org.gnu.Emacs.Sauron.AddMsgEvent"      \
-;;     string:shell string:msg string:"$1"
+;;     string:shell uint32:3 string:msg
 ;; }
 
 ;;; Code:
@@ -102,15 +103,15 @@
         <node name=\"" sr-dbus-path "\"> 
           <interface name=\"" sr-dbus-interface "\">
             <method name=\"AddUrlEvent\">
-              <arg name=\"origin\"  type=\"s\" direction=\"in\"/>
-              <arg name=\"type\"    type=\"s\" direction=\"in\"/>
-              <arg name=\"message\" type=\"s\" direction=\"in\"/>
-              <arg name=\"url\"     type=\"s\" direction=\"in\"/>
+              <arg name=\"origin\"   type=\"s\" direction=\"in\"/>
+              <arg name=\"priority\" type=\"u\" direction=\"in\"/>
+              <arg name=\"message\"  type=\"s\" direction=\"in\"/>
+              <arg name=\"url\"      type=\"s\" direction=\"in\"/>
              </method>
             <method name=\"AddMsgEvent\">
-              <arg name=\"origin\"  type=\"s\" direction=\"in\"/>
-              <arg name=\"type\"    type=\"s\" direction=\"in\"/>
-              <arg name=\"message\" type=\"s\" direction=\"in\"/>
+              <arg name=\"origin\"   type=\"s\" direction=\"in\"/>
+              <arg name=\"priority\" type=\"u\" direction=\"in\"/>
+              <arg name=\"message\"  type=\"s\" direction=\"in\"/>
              </method>
           </interface>
        </node>"))))
@@ -119,28 +120,30 @@
   (lexical-let ((url url))
     (lambda() (browse-url url))))
 
-(defun sr-dbus-add-url-event (origin type message url)
+(defun sr-dbus-add-url-event (origin prio message url)
   "Add a dbus-originated event."
   (sauron-add-event
-    origin
-    type
-    3
+    'dbus
+    prio
+    (concat (propertize origin 'face 'sauron-highlight2-face)
+      ":" message)
     ;; pseudo closure...
     (lexical-let ((url url))
       (lambda() (browse-url url)))
-    message)
+    `(:url ,url :origin: ,origin))
   '(:boolean t))
 
-(defun sr-dbus-add-msg-event (origin type message)
+(defun sr-dbus-add-msg-event (origin prio message)
   "Add a dbus-originated event."
   (sauron-add-event
-    origin
-    type
-    3
+    'dbus
+    prio
+    (concat (propertize origin 'face 'sauron-highlight1-face)
+      ": " message)
     ;; pseudo closure...
     (lexical-let ((msg message))
       (lambda() (message "%s" msg)))
-    message)
+    `(:origin origin))
   '(:boolean t))
 
 

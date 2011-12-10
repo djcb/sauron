@@ -29,37 +29,81 @@
   
 ** customization
    
-   Now, you can make sauron give you the behaviour you like; you can do this,
-   by implementing some hook-functions.
+   I've tried hard to come up with reasonable defaults, such that users can get
+   started with sauron without reading too much documentation or having to write
+   emacs-lisp etc.; still, I've also tried to make sauron very configurable -
+   different people have different needs, so it should be possible to coerce the
+   software in whatever direction.
 
-*** blocking events
+   Below are some customization points.
+
+*** priorities -- =sauron-min-priority=
+
+    Each event in sauron has a certain /priority/. Sauron *ignores* all events
+    which have a priority that is lower that =sauron-min-priority= (default
+    value: 3).
+
+    For example, all message written on IRC (i.e., coming from the ERC-backend)
+    which are *not* directed towards you have priority 2 -- you will not see
+    them. And that is probably a good idea.
+
+*** watching patterns -- =sauron-watch-patterns=
     
-    Before events are added to the list, you can check them using the hook
-    =sauron-event-block-functions=. If any of the hook-functions return
-    non-nil, the event will be blocked. Example:
+    You can specify a list of patterns (regular expressions) which sauron should
+    check. An event matching any of the patterns in the list
+    =sauron-watch-patterns= of which the priority is currently below
+    =sauron-min-priority= (see above), will have its priority raised to
+    =sauron-min-priority=. In other words, a message that would otherwise be
+    ignored, will now show up in the Sauron buffer.
 
-#+begin_src emacs-lisp
+    =sauron-watch-patterns= is useful if you want to check if, for example, your
+    name, or your hobby project is mentioned in some IRC channel.
+
+*** blocking events from showing up -- =sauron-event-block-functions=
+    
+    We can customize things even more precisely using the
+    =sauron-event-block-functions= hook function. Any event with a priority >=
+    =sauron-min-priority= will be passed to the hook function(s); if any of
+    those functions returns non-nil, the event will be blocked. See the emacs
+    documentation for a general introduction to hook functions, here's an
+    example:
+#+begin_example
 (add-hook 'sauron-event-block-functions
-  (lambda (origin event-type priority msg)
+  (lambda (origin prio msg &optional props)
     (or
-      (string-match "^*** Users" msg) ;; Ignore ERC user lists
+      (string-match "foo" msg) ;; ignore events that match 'foo' 
       ;; other matchers
      )))
 #+end_example
 
-    After events have been added to the list, another hook is called:
-    =sauron-event-added-functions=. This is place to add sound effects,
-    notifications and so on. To make this easy, a few convenience functions
-    are provided:
+    Note that the =props= parameter is a backend specific property-list, which
+    allows you e.g. (for the ERC-backend) to get the sender of some ERC message,
+    and block based on that.
+
+*** doing stuff based on events -- =sauron-event-added-functions=
+
+    After events have been added, another hook is called:
+    =sauron-event-added-functions=.  
+
+    This is place to add sound effects, notifications and so on. After all, if
+    you get an event for e.g. the org-mode backend that you have a meeting to
+    attend in 5 minutes, simply adding a line in the Sauron-buffer may not be
+    enough.
+
+    Instead, you can define a hook function for this. To make this easy, a few
+    convenience functions are provided:
     - ~sauron-sox~ (play a sound using 'sox')
     - ~sauron-aplay~ (play a sound using 'aplay')
     - ~sauron-gnome-osd~ (pops up some letters on your screen)
     - ~sauron-zenity~ (pop up a zenity window)
+    (see the doc-strings for the functions for the details about their
+    parameters).
+  
     Now our, function can look something like:
 
-#+begin_src emacs-lisp
+#+begin_example
 (add-hook 'sauron-event-added-functions
-  (lambda (origin event-type prio msg)
+  (lambda (origin prio msg &optional props)
     (if (string-match "ping" msg)
       (sauron-sox "/common/sounds/ping.wav")
       (sauron-sox "/common/sounds/something-happened.wav"))
@@ -67,9 +111,8 @@
       (progn
 	(sauron-sox "/common/sounds/uhoh.wav")
 	(sauron-gnome-osd (concat event-type "@" origin ": " msg) 10)))))
-#+end_src
-  
-      
+#+end_example
+       
 ** adding new modules
    
    It may be interesting to track other modules as well; this shouldn't be too
@@ -84,7 +127,7 @@
 
    Now, to actually make your module useful, you'd want to add some event is
    something happens. This is done using =sauron-add-event= (see it's
-   documentation). The first parameter should be =foo=.
+   documentation).
 
     
 

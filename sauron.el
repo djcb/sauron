@@ -29,9 +29,7 @@
 (eval-when-compile (require 'cl))
 
 (defvar sauron-modules
-  '(sauron-erc
-    sauron-dbus
-     sauron-org)
+  '(sauron-erc sauron-dbus sauron-org)
   "List of sauron modules to use. Currently supported are:
 sauron-erc and sauron-dbus.")
 
@@ -39,12 +37,25 @@ sauron-erc and sauron-dbus.")
 (defvar sauron-separate-frame t
   "Whether the sauron should use a separate frame.")
 
-(defvar sauron-event-format "%t %p %o %e %m"
+(defvar sauron-frame-geometry "8x100+0-0"
+  "Geometry (size, position) of the the sauron frame, in X geometry
+  notation.")
+
+(defvar sauron-min-priority 3
+  "The minimum priority range for sauron to consider -- ie. all
+events with priority < MIN will be ignored, and not passed to the
+hook functions.")
+
+(defvar sauron-watch-patterns nil
+  "The list of regular expressions to watch for - when an event has
+one of these words, the priority of the event will raised to at
+least `sauron-min-priority'.")
+
+(defvar sauron-event-format "%t %o %m"
   "Format of a sauron event line. The following format parameters are available:
 %t: the timestamp (see `sauron-timestamp-format' for its format)
 %p: priority of the event (an integer [1..5])
 %o: the origin of the event
-%e: the type of event
 %m: the message for this event.")
 
 (defvar sauron-timestamp-format "%Y-%m-%d %H:%M:%S"  
@@ -58,25 +69,23 @@ sauron-erc and sauron-dbus.")
   "Hook to be called *before* an event is added. If all of the
 hooked functions return nil, the event is allowed to be added. The
 function takes the following arguments:
-  (ORIGIN EVENT-TYPE PRIORITY MSG), where
-ORIGIN is a string denoting the ORIGIN of the event
-EVENT-TYPE is a string denoting the type of event
-PRIORITY is an integer [1..5] describing the priority of the event
-MSG is the message.
+  (ORIGIN MSG PROPS), where:
+ORIGIN is a symbol denoting the source of the event (ie.,'erc or 'dbus)
+MSG is the message for this event
+PROPS is a backend-specific plist.
 If the hook is not set, all events are allowed.")
 
 (defvar sauron-event-added-functions nil
   "Hook to be called *after* an event is added. If any of the hook
 functions return non-nil, the event is blocked from being
 added. The hook function takes the following arguments:
-  (ORIGIN EVENT-TYPE PRIORITY MSG), where
-ORIGIN is a string denoting the ORIGIN of the event
-EVENT-TYPE is a string denoting the type of event
-PRIORITY is an integer [1..5] describing the priority of the event
-MSG is the message.")
+  (ORIGIN MSG PROPS), where:
+ORIGIN is a symbol denoting the source of the event (ie.,'erc or 'dbus)
+MSG is the message for this event
+PROPS is a backend-specific plist.")
+
 
 ;;  faces; re-using the font-lock stuff...
-
 (defface sauron-timestamp-face
   '((t :inherit font-lock-type-face))
   "Face for a sauron time stamp.")
@@ -85,13 +94,22 @@ MSG is the message.")
   '((t :inherit font-lock-preprocessor-face))
   "Face for a sauron event message.")
 
-(defface sauron-event-type-face
-  '((t :inherit font-lock-doc-face))
-  "Face for a sauron event-type.")
-
 (defface sauron-origin-face
   '((t :inherit font-lock-pseudo-keyword-face))
   "Face for a sauron event origin.")
+
+;; these highlight faces are for use in backends
+(defface sauron-highlight1-face
+  '((t :inherit font-lock-warning-face))
+  "Face to highlight certain things (1).")
+
+(defface sauron-highlight2-face
+  '((t :inherit font-lock-string-face))
+  "Face to highlight certain things (2).")
+
+(defface sauron-highlight3-face
+  '((t :inherit font-lock-constant-face))
+  "Face to highlight certain things (3).")
 
 ;;(setq sauron-mode-map nil)
 (defvar sauron-mode-map
@@ -126,7 +144,7 @@ MSG is the message.")
 	(error "%s not defined" start-func-name))))
   (message "Sauron has started")
   (sauron-show)
-  (sauron-add-event "sauron" "start" 1 nil "sauron has started"))
+  (sauron-add-event 'sauron 1 "sauron has started"))
 
 (defun sauron-stop ()
   "Stop sauron."
@@ -138,48 +156,81 @@ MSG is the message.")
 	(funcall stop-func)
 	(error "%s not defined" stop-func-name))))
   (message "Sauron has stopped")
-  (sauron-add-event "sauron" "stop" 1 nil "sauron has stopped")
+  (sauron-add-event 'sauron 1 "sauron has stopped")
   (sauron-hide))
 
 
+(defun sr-pattern-matches (msg ptrnlist)
+  "Return t if any regexp in the list PTRNLIST matches MSG,
+otherwise return nil."
+  ;; (when ptrnlist
+  ;;   (message "MATCH %S %S => %S" (car ptrnlist) msg
+  ;;     (string-match (car ptrnlist) msg)))
+  (cond
+    ((null ptrnlist) nil)                ;; no match
+    ((string-match (car ptrnlist) msg) t) ;; match   
+    (t (sr-pattern-matches msg (cdr ptrnlist))))) ;; continue searching
 
-(defun sauron-add-event (origin event-type priority callback
-			  frm &rest params)
-  "Add a new event to the Sauron log with ORIGIN (e.g., \"erc\")
-  being a string describing the origin of the event, EVENT-TYPE the
-  type of event (e.g.,\"ping\" when someone pinged you, PRIORITY
-  gives the priority (an integer in the range [1..5]), CALLBACK, if
-  non-nil a function to be called when user activates the event in
-  the log, and FRM a format parameter, with optional PARAMS with
-  the usual meaning."
-  (let ((msg (apply 'format frm params)))
-    ;; we allow this even only if `sauron-event-block-functions' is nil, or all
-    ;; of the functions return nil (ie. 'success' here means blocking)
-    (unless (run-hook-with-args-until-success 'sauron-event-block-functions
-	      origin event-type priority msg)
+    
+;; the main work horse function
+(defun sauron-add-event (origin prio msg &optional func props)
+  "Add a new event to the Sauron log with:
+ORIGIN the source of the event (e.g., 'erc or 'dbus or 'org)
+PRIO the priority of the event, integer [0..5]
+MSG a string describing the event.
+Then, optionally:
+FUNC if non-nil, a function called when user activates the event in the log.
+PROPS an origin-specific property list that will be passed to the hook funcs."
+  ;; since this is called by possibly external modules, scrutinize the params
+  ;; a bit more, to make debugging easier
+  (unless (symbolp origin)
+    (error "sauron-add-event: ORIGIN must be a symbol, not %S" origin))
+  (unless (and (integerp prio) (>= prio 0) (<= prio 5))
+    (error "sauron-add-event: PRIO  ∈ [0..5], not %S" prio))
+  (unless (stringp msg) 
+    (error "sauron-add-event: MSG must be a string, not %S" msg))
+  (unless (or (null func) (functionp func))
+    (error "sauron-add-event: FUNC must be nil or a function, not %S"
+      func))
+  (unless (or (null props) (listp props))
+    (error "sauron-add-event: PROPS must be nil or a plist, not %S" props))
+
+  ;; if priority is below `sauron-min-priority, but it does match one of our
+  ;; `sauron-watch-patterns, raise its priority to `sauron-min-priority'.
+  (let ((prio (cond
+		((>= prio sauron-min-priority) prio) ;; don't change
+		((sr-pattern-matches msg sauron-watch-patterns)
+		  sauron-min-priority) ;; raise priority
+		(t prio)))) ;; otherwise, dont change
+    
+    ;; we allow this event only if it's prio >= `sauron-min-priority' and
+    ;; running the `sauron-event-block-functions' hook evaluates to nil.
+    (when (and (>= prio sauron-min-priority)
+	    (null (run-hook-with-args-until-success
+		     'sauron-event-block-function origin prio msg props)))
       (let* ((line (format-spec sauron-event-format
 		     (format-spec-make
-		       ?o (propertize origin 'face 'sauron-origin-face)
-		       ?p (propertize (format "%d" priority))
-		       ?e (propertize event-type 'face 'sauron-event-type-face)
 		       ?t (propertize (format-time-string sauron-timestamp-format
 					(current-time)) 'face 'sauron-timestamp-face)
-		       ?m (propertize msg 'face 'sauron-message-face))))
+		       ?p (format "%d" prio)
+		       ?o (propertize (symbol-name origin) 'face 'sauron-origin-face)
+		       ?m msg)))
 	      ;; add the callback as a text property, remove any embedded newlines,
 	      ;; truncate if necessary append a newline
 	      (line (concat 
 		      (truncate-string-to-width 
 			(propertize (replace-regexp-in-string "\n" " " line)
-			  'callback callback)
+			  'callback func)
 			sauron-max-line-length 0 nil t)
 		      "\n"))
 	      (inhibit-read-only t))
-	(sr-create-buffer-maybe) ;; create log if it did not exist yet
+	(sr-create-buffer-maybe) ;; create buffer if it did not exist yet
 	(with-current-buffer sr-buffer
 	  (goto-char (point-max))
 	  (insert line))
-	(run-hook-with-args 'sauron-event-added-functions 
-	  origin event-type priority msg)))))
+	(run-hook-with-args
+	  'sauron-event-added-functions origin prio msg props)))))
+  
   
 (defun sauron-activate-event ()
   "Activate the callback for the current sauron line, and remove
@@ -190,8 +241,8 @@ any special faces from the line."
   (let* ((callback (get-text-property (point) 'callback))
   	  (inhibit-read-only t))
     ;; remove the funky faces
-    (put-text-property (line-beginning-position)
-      (line-end-position) 'face 'default) 
+    (put-text-property (line-beginning-position) (line-end-position)
+      'face 'default) 
     (if callback
       (funcall callback)
       (message "No callback defined for this line."))))
@@ -228,9 +279,15 @@ one."
 	(select-window win)
 	(make-frame-visible frame))
       (if sauron-separate-frame
-	(switch-to-buffer-other-frame sr-buffer)
-	(switch-to-buffer sr-buffer))
-      (set-window-dedicated-p (selected-window) t))))
+	(progn
+	  (switch-to-buffer-other-frame sr-buffer)
+	  (let ((frame-params
+		  (append
+		    '((tool-bar-lines . 0) (menu-bar-lines . 0))
+		    (x-parse-geometry sauron-frame-geometry))))		  
+	    (modify-frame-parameters nil frame-params)))
+	(switch-to-buffer sr-buffer)))
+      (set-window-dedicated-p (selected-window) t)))
 
 (defun sauron-hide ()
   "Hide the sauron buffer and/of frame."

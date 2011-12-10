@@ -28,44 +28,57 @@
 (require 'erc)
 (eval-when-compile (require 'cl))
 
+(defvar sauron-erc-interesting-events
+  '(privmsg current-nick keyword)
+  "The list of ERC events we are interested in. Available are:
+- privmsg:       a PRIVMSG message received
+- join           a JOIN message received
+- quit           a QUIT message received
+The following events are erc-track
+- current-nick:  current nick mentioned in ERC
+- keyword:       some keyword mentioned in ERC.")
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defvar sr-erc-hook-functions 
+  '( (erc-text-matched-hook        . sr-erc-text-matched-hook-func)
+     (erc-server-PRIVMSG-functions . sr-erc-PRIVMSG-hook-func))
+  "*internal* Hook functions to add/remove.")
+
 (defun sauron-erc-start ()
   "Start watching ERC."
-  ;; the match hook
-  (add-hook 'erc-text-matched-hook 'sr-erc-text-matched-hook-func)
   (add-hook 'erc-server-PRIVMSG-functions 'sr-erc-PRIVMSG-hook-func))
- 
-
+  
 (defun sauron-erc-stop ()
   "Stop watching ERC."
-  (remove-hook 'erc-text-matched-hook 'sr-erc-text-matched-hook-func)
-  (remove-hook 'erc-server-PRIVMSG-functions 'sr-erc-PRIVMSG-hook-func))
-
-(defun sr-erc-text-matched-hook-func (match-type nick msg)
-  "Hook function, to be called for erc-matched-hook."
-  (when (memq match-type '(current-nick keyword pal))
-    (sr-erc-handler match-type nick msg (buffer-name))))
-
+  (add-hook 'erc-server-PRIVMSG-functions 'sr-erc-PRIVMSG-hook-func))
+    
 (defun sr-erc-PRIVMSG-hook-func (proc parsed)
   "Hook function, to be called for erc-matched-hook."
-  (let ((nick (car (erc-parse-user (erc-response.sender parsed))))
-        (target (car (erc-response.command-args parsed)))
-        (msg (erc-response.contents parsed)))
-    (when (erc-current-nick-p target)
-      (sr-erc-handler "privmsg" nick msg nick))))
-
-(defun sr-erc-handler (match-type nick msg channel)
-  "Handler function for ERC messages."
-  (let* ((msg (format "%s:%s" nick msg)))
-    ;; remove all the text properties, it seems there are a lot
-    (set-text-properties 0 (length msg) nil msg)
+  (let* ( (me     (erc-current-nick))
+	  (sender (car (erc-parse-user (erc-response.sender parsed))))
+	  (target (car (erc-response.command-args parsed)))
+	  (msg (erc-response.contents parsed))
+	  (prio
+	    (cond
+	      ((string= me target)   4)    ;; private message for me => prio 4
+	      ((string-match me msg) 3)    ;; I'm mentioned => prio 3 (FIXME)
+	      (t                     2)))) ;; default 
     (sauron-add-event
-      "erc"
-      (format "%S" match-type)
-      3 ;; priority
-      (lexical-let ((channel channel))
-	(lambda() (sauron-switch-to-buffer channel)))
-      msg)))
-  
+      'erc
+      prio
+      (concat
+	(propertize sender 'face 'sauron-highlight1-face) "→"
+	(propertize target 'face 'sauron-highlight2-face) " "
+	msg)
+      (lexical-let ((target target)) ;; FIXME: assumes we open separate window
+	(lambda()  (sauron-switch-to-buffer target)))
+      `(:event privmsg
+	 :sender ,sender
+	 :me      ,me
+	 :target ,target
+	 :msg ,msg))))
+ 
 (provide 'sauron-erc)
 
 

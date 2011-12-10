@@ -54,8 +54,10 @@ could be lists, too."
 	      ((> left 15) 3)
 	      ((> left 10) 4)
 	      ((< left 10) 5))))
-    (sauron-add-event "org" "reminder" prio 'org-agenda-list
-      (format "%s minutes left before %s" minutes-to-app msg))
+    (sauron-add-event 'org prio
+      (format "%s minutes left before %s" minutes-to-app msg)
+      'org-agenda-list
+      `(:minutes-left ,left :msg ,msg))
     ;; call the old function as well, if defined
     (when sauron-org-old-appt-func
       (funcall sauron-org-old-appt-func minutes-to-app new-time msg))))
