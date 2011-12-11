@@ -41,12 +41,15 @@
    Now, you can start sauron with... =M-x sauron-start=, and stop it with =M-x
    sauron-stop=.
 
-   =sauron-start= will pop-up a new frame which will show events coming from any
-   of its sources (i.e.., ERC, org-mode appointments and over d-bus). You can
-   'activate' a source by pressing "Enter" with the cursor on the event, which
-   will then take some backend-specific action. For example, for the
-   ERC-backend, it will transfer you to the buffer (IRC-channel) where said
-   event happened.
+   =sauron-start= will pop-up a new frame (window) which will show events coming
+   from any of its sources (i.e.., ERC, org-mode appointments and over
+   d-bus). You can 'activate' a source by pressing "Enter" with the cursor on
+   the event, which will then take some backend-specific action. 
+
+   For example, for the ERC-backend, it will transfer you to the buffer
+   (IRC-channel) where said event happened. 
+
+   You can clear all events with =M-x sauron-clear= (default keybinding: =c=).
 
    Sauron (by default) loads the =sauron-erc=, =sauron-org= and =sauron-dbus=
    modules; if you don't have ERC, org-mode or d-bus support, these will simply
