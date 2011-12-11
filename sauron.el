@@ -37,7 +37,7 @@ sauron-erc and sauron-dbus.")
 (defvar sauron-separate-frame t
   "Whether the sauron should use a separate frame.")
 
-(defvar sauron-frame-geometry "8x100+0-0"
+(defvar sauron-frame-geometry "100x8+0-0"
   "Geometry (size, position) of the the sauron frame, in X geometry
   notation.")
 
@@ -255,7 +255,7 @@ any special faces from the line."
 		(get-buffer buffer-or-name)))
 	  (win (and buf (get-buffer-window buf 'visible))))
     (unless (and buf (buffer-live-p buf))
-      (error "Buffer %s not found" channel))
+      (error "Buffer %s not found" buf))
     (let* ( ;; don't re-use the Sauron window
 	    (display-buffer-reuse-frames t)
 	    ;; if we're using a separate Sauron frame, don't split it
