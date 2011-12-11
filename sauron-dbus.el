@@ -45,7 +45,7 @@
 ;;     --dest="org.gnu.Emacs"		       \
 ;;      "/org/gnu/Emacs/Sauron"                \
 ;;     "org.gnu.Emacs.Sauron.AddMsgEvent"      \
-;;     string:shell uint32:3 string:msg
+;;     string:shell uint32:3 string:$1
 ;; }
 
 ;;; Code:
