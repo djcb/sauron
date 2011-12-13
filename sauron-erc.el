@@ -71,14 +71,17 @@ The following events are erc-track
 	  (msg (erc-response.contents parsed)))
     (sauron-add-event
       'erc
-      3
+      2
       (concat (propertize sender 'face 'sauron-highlight1-face) " has " 
 	(case event
-	  ('quit "quited")
-	  ('part "parted")
-	  ('join "joined")))
+	  ('quit (concat "quit (" msg ")"))
+	  ('part (concat "left "
+		   (propertize target 'face 'sauron-highlight2-face)
+		   " (" msg ")"))
+	  ('join (concat "joined "
+		   (propertize target 'face 'sauron-highlight2-face)))))
       ;; FIXME: assumes we open separate window
-      (when (eq event 'joined)
+      (when (eq event 'join)
 	(lexical-let ((target target)) 
 	  (lambda()  (sauron-switch-to-buffer target))))
       `(:event   ,event
@@ -90,18 +93,15 @@ The following events are erc-track
 
 (defun sr-erc-JOIN-hook-func (proc parsed)
   "JOIN hook function."
-  (message "JOIN")
-  (sr-erc-hook-func proc parse 'join))
+  (sr-erc-hook-func proc parsed 'join))
 
 (defun sr-erc-QUIT-hook-func (proc parsed)
   "QUIT hook function."
-  (message "QUIT")
-  (sr-erc-hook-func proc parse 'quit))
+  (sr-erc-hook-func proc parsed 'quit))
 
 (defun sr-erc-PART-hook-func (proc parsed)
   "PART hook function."
-    (message "PART")
-  (sr-erc-hook-func proc parse 'part))
+  (sr-erc-hook-func proc parsed 'part))
 
 
 (defun sr-erc-PRIVMSG-hook-func (proc parsed)
@@ -132,7 +132,10 @@ The following events are erc-track
 	 :me     ,me
 	 :target ,target
 	 :msg    ,msg))))
- 
+
+
+
+
 (provide 'sauron-erc)
 
 
