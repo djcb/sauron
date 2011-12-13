@@ -51,6 +51,19 @@ hook functions.")
 one of these words, the priority of the event will raised to at
 least `sauron-min-priority'.")
 
+(defvar sauron-watch-nicks nil
+  "The list of nicks (as in, IRC-nicks) to watch for
+joining/leaving IRC channels - when such an event comes the
+priority of the event will raised to at least
+`sauron-min-priority'.")
+
+(defvar sauron-nick-insensitivity 60
+  "The time (in seconds) we give lower priority to the events
+coming from some nick after something has come in. This is to
+prevent large numbers of beeps, light effects when dealing with
+nick. Must be < 65536")
+
+
 (defvar sauron-event-format "%t %o %m"
   "Format of a sauron event line. The following format parameters are available:
 %t: the timestamp (see `sauron-timestamp-format' for its format)
@@ -100,7 +113,7 @@ PROPS is a backend-specific plist.")
 
 ;; these highlight faces are for use in backends
 (defface sauron-highlight1-face
-  '((t :inherit font-lock-warning-face))
+  '((t :inherit font-lock-pseudo-keyword-face))
   "Face to highlight certain things (1).")
 
 (defface sauron-highlight2-face
@@ -120,11 +133,16 @@ PROPS is a backend-specific plist.")
   "Keymap for the sauron buffer.")
 (fset 'sauron-mode-map sauron-mode-map)
 
+(defvar sr-nick-event-hash nil
+  "*internal* hash of nicks and the last time we raised an 'event'
+  for that at >= `sauron-min-priority'.")
+
 (defun sauron-mode ()
   "Major mode for the sauron."
   (interactive)
   (kill-all-local-variables)
   (use-local-map sauron-mode-map)
+  (make-local-variable 'sr-nick-event-hash)
   (setq
     major-mode 'sauron-mode
     mode-name "Sauron"
@@ -143,7 +161,8 @@ PROPS is a backend-specific plist.")
 	(funcall start-func)
 	(error "%s not defined" start-func-name))))
   (message "Sauron has started")
-  (sauron-show)
+  (setq sr-nick-event-hash (make-hash-table :size 100))
+  (sr-show)
   (sauron-add-event 'sauron 1 "sauron has started"))
 
 (defun sauron-stop ()
@@ -157,22 +176,50 @@ PROPS is a backend-specific plist.")
 	(error "%s not defined" stop-func-name))))
   (message "Sauron has stopped")
   (sauron-add-event 'sauron 1 "sauron has stopped")
-  (sauron-hide))
+  (sr-hide))
 
-
-(defun sr-pattern-matches (msg ptrnlist)
+(defun sr-pattern-matches (msg ptrnlist cmpfunc)
   "Return t if any regexp in the list PTRNLIST matches MSG,
-otherwise return nil."
-  ;; (when ptrnlist
-  ;;   (message "MATCH %S %S => %S" (car ptrnlist) msg
-  ;;     (string-match (car ptrnlist) msg)))
+otherwise return nil. CMP is the comparison function."
   (cond
     ((null ptrnlist) nil)                ;; no match
-    ((string-match (car ptrnlist) msg) t) ;; match   
-    (t (sr-pattern-matches msg (cdr ptrnlist))))) ;; continue searching
+    ((funcall cmpfunc (car ptrnlist) msg) t) ;; match   
+    (t (sr-pattern-matches msg (cdr ptrnlist) cmpfunc)))) ;; continue searching
 
-    
-;; the main work horse function
+
+(defun sr-recent-nick-event (nick)
+  "Whether we have triggered an 'event' for NICK in the last
+`sauron-nick-insensitivity' SECS. If so, return t and do nothing;
+otherwise, return nil, and update the table with the NICK and a
+timestamp."
+   ;; we only store the lsb, which is good enough for 2^16 seconds. 
+  (let ((now-lsb (nth 1 (current-time))) ;; the stupid emacs time
+	 (tstamp (gethash nick sr-nick-event-hash)))
+    (unless (and tstamp (> (- now-lsb tstamp) sauron-nick-insensitivity))
+      (puthash nick now-lsb sr-nick-event-hash))))
+
+(defun sr-calibrated-prio (msg props prio)
+  "Re-calibrate the PRIO for MSG with PROPS, based on:
+1) if MSG matches any of `sauron-watch-patterns', raise the priority.
+2) if the nick (sender) of MSG matches `sauron-watch-nick', raise the priority.
+3) if we raised the priority of nick in the last `sauron-nick-insensitity' seconds,
+   lower the priority.
+Returns the new priority."  
+  (let ((prio prio)
+	 (nick (plist-get props :sender)))
+    ;; check for watch patterns
+    (when (sr-pattern-matches msg sauron-watch-patterns 'string-match)
+      (incf prio))
+    ;; check for watch nicks
+    (when (and nick (sr-pattern-matches msg sauron-watch-nicks 'string=))
+      (incf prio))
+    ;; did we already raise an event for nick recently?
+    (when (and nick (sr-recent-nick-event nick))
+      (decf prio))
+    prio))
+
+   
+;; the main work horse functions
 (defun sauron-add-event (origin prio msg &optional func props)
   "Add a new event to the Sauron log with:
 ORIGIN the source of the event (e.g., 'erc or 'dbus or 'org)
@@ -195,43 +242,39 @@ PROPS an origin-specific property list that will be passed to the hook funcs."
   (unless (or (null props) (listp props))
     (error "sauron-add-event: PROPS must be nil or a plist, not %S" props))
 
-  ;; if priority is below `sauron-min-priority, but it does match one of our
-  ;; `sauron-watch-patterns, raise its priority to `sauron-min-priority'.
-  (let ((prio (cond
-		((>= prio sauron-min-priority) prio) ;; don't change
-		((sr-pattern-matches msg sauron-watch-patterns)
-		  sauron-min-priority) ;; raise priority
-		(t prio)))) ;; otherwise, dont change
-    
-    ;; we allow this event only if it's prio >= `sauron-min-priority' and
-    ;; running the `sauron-event-block-functions' hook evaluates to nil.
-    (when (and (>= prio sauron-min-priority)
-	    (null (run-hook-with-args-until-success
-		     'sauron-event-block-function origin prio msg props)))
-      (let* ((line (format-spec sauron-event-format
-		     (format-spec-make
-		       ?t (propertize (format-time-string sauron-timestamp-format
-					(current-time)) 'face 'sauron-timestamp-face)
-		       ?p (format "%d" prio)
-		       ?o (propertize (symbol-name origin) 'face 'sauron-origin-face)
-		       ?m msg)))
-	      ;; add the callback as a text property, remove any embedded newlines,
-	      ;; truncate if necessary append a newline
-	      (line (concat 
-		      (truncate-string-to-width 
-			(propertize (replace-regexp-in-string "\n" " " line)
-			  'callback func)
-			sauron-max-line-length 0 nil t)
-		      "\n"))
-	      (inhibit-read-only t))
-	(sr-create-buffer-maybe) ;; create buffer if it did not exist yet
-	(with-current-buffer sr-buffer
-	  (goto-char (point-max))
-	  (insert line))
-	(run-hook-with-args
-	  'sauron-event-added-functions origin prio msg props)))))
-  
-  
+  ;; recalculate the prio, based on watchwords, nicks involved, and recent
+  ;; history.
+  (setq prio (sr-calibrated-prio msg props prio))
+;;  (message "%S %S" prio msg)
+  ;; we allow this event only if it's prio >= `sauron-min-priority' and
+  ;; running the `sauron-event-block-functions' hook evaluates to nil.
+  (when (and (>= prio sauron-min-priority)
+	  (null (run-hook-with-args-until-success
+		  'sauron-event-block-function origin prio msg props)))
+    (let* ((line (format-spec sauron-event-format
+		   (format-spec-make
+		     ?t (propertize (format-time-string sauron-timestamp-format
+				      (current-time)) 'face 'sauron-timestamp-face)
+		     ?p (format "%d" prio)
+		     ?o (propertize (symbol-name origin) 'face 'sauron-origin-face)
+		     ?m msg)))
+	    ;; add the callback as a text property, remove any embedded newlines,
+	    ;; truncate if necessary append a newline
+	    (line (concat 
+		    (truncate-string-to-width 
+		      (propertize (replace-regexp-in-string "\n" " " line)
+			'callback func)
+		      sauron-max-line-length 0 nil t)
+		    "\n"))
+	    (inhibit-read-only t))
+      (sr-create-buffer-maybe) ;; create buffer if it did not exist yet
+      (with-current-buffer sr-buffer
+	(goto-char (point-max))
+	(insert line))
+      (run-hook-with-args
+	'sauron-event-added-functions origin prio msg props))))
+
+
 (defun sauron-activate-event ()
   "Activate the callback for the current sauron line, and remove
 any special faces from the line."
@@ -266,7 +309,7 @@ any special faces from the line."
 	    (win  (display-buffer buf t)))
       (select-frame-set-input-focus (window-frame win)))))
 
-(defun sauron-show ()
+(defun sr-show ()
   "Show the sauron buffer. Depending on
 `sauron-separate-frame', it will use the current frame or a new
 one."
@@ -289,7 +332,7 @@ one."
 	(switch-to-buffer sr-buffer)))
       (set-window-dedicated-p (selected-window) t)))
 
-(defun sauron-hide ()
+(defun sr-hide ()
   "Hide the sauron buffer and/of frame."
   (interactive)
   (unless (buffer-live-p sr-buffer)
