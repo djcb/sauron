@@ -84,7 +84,7 @@ The following events are erc-track
       (when (eq event 'join)
 	(lexical-let ((target target)) 
 	  (lambda()  (sauron-switch-to-buffer target))))
-      `(:event   ,event
+      `( :event   ,event
 	 :sender ,sender
 	 :me     ,me
 	 :target ,target
@@ -106,15 +106,16 @@ The following events are erc-track
 
 (defun sr-erc-PRIVMSG-hook-func (proc parsed)
   "Hook function, to be called for erc-matched-hook."
+;;  (message "PRIVMSG %S" parsed)
   (let* ( (me     (erc-current-nick))
 	  (sender (car (erc-parse-user (erc-response.sender parsed))))
 	  (target (car (erc-response.command-args parsed)))
 	  (msg (erc-response.contents parsed))
 	  (prio
 	    (cond
-	      ((string= sender "root") 2)    ;; bitlbee stuff
-	      ((string= me target)     4)    ;; private message for me => prio 4
-	      ((string-match me msg)   3)    ;; I'm mentioned => prio 3 (FIXME)
+	      ((string= sender "root") 2)    ;; bitlbee stuff; low-prio
+	      ((string= me target)     3)    ;; private message for me => prio 3
+	      ((string-match me msg)   3)    ;; I'm mentioned => prio 3
 	      (t                       2)))) ;; default 
     (sauron-add-event
       'erc
@@ -124,7 +125,7 @@ The following events are erc-track
 	(propertize target 'face 'sauron-highlight2-face) " "
 	msg)
       ;; FIXME: assumes we open separate window
-      (lexical-let ((target target) (me me)) 
+      (lexical-let ((sender sender) (target target) (me me)) 
 	(lambda()  (sauron-switch-to-buffer
 		     (if (string= target me) sender target))))
       `(:event   privmsg

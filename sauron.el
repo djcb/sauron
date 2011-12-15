@@ -5,7 +5,7 @@
 
 ;; Author: Dirk-Jan C. Binnema <djcb@djcbsoftware.nl>
 ;; Maintainer: Dirk-Jan C. Binnema <djcb@djcbsoftware.nl>
-;; Keywords: 
+;; Keywords:
 ;; Version: 0.0
 
 ;; This file is not part of GNU Emacs.
@@ -71,7 +71,7 @@ nick. Must be < 65536")
 %o: the origin of the event
 %m: the message for this event.")
 
-(defvar sauron-timestamp-format "%Y-%m-%d %H:%M:%S"  
+(defvar sauron-timestamp-format "%Y-%m-%d %H:%M:%S"
   "Format for the timestamps, as per `format-time-string'.")
 
 (defvar sauron-max-line-length 80
@@ -142,7 +142,6 @@ PROPS is a backend-specific plist.")
   (interactive)
   (kill-all-local-variables)
   (use-local-map sauron-mode-map)
-  (make-local-variable 'sr-nick-event-hash)
   (setq
     major-mode 'sauron-mode
     mode-name "Sauron"
@@ -161,7 +160,7 @@ PROPS is a backend-specific plist.")
 	(funcall start-func)
 	(error "%s not defined" start-func-name))))
   (message "Sauron has started")
-  (setq sr-nick-event-hash (make-hash-table :size 100))
+  (setq sr-nick-event-hash (make-hash-table :size 100 :test 'equal))
   (sr-show)
   (sauron-add-event 'sauron 1 "sauron has started"))
 
@@ -183,20 +182,26 @@ PROPS is a backend-specific plist.")
 otherwise return nil. CMP is the comparison function."
   (cond
     ((null ptrnlist) nil)                ;; no match
-    ((funcall cmpfunc (car ptrnlist) msg) t) ;; match   
+    ((funcall cmpfunc (car ptrnlist) msg) t) ;; match
     (t (sr-pattern-matches msg (cdr ptrnlist) cmpfunc)))) ;; continue searching
 
 
-(defun sr-recent-nick-event (nick)
+(defun sr-fresh-nick-event (nick)
   "Whether we have triggered an 'event' for NICK in the last
 `sauron-nick-insensitivity' SECS. If so, return t and do nothing;
 otherwise, return nil, and update the table with the NICK and a
 timestamp."
-   ;; we only store the lsb, which is good enough for 2^16 seconds. 
-  (let ((now-lsb (nth 1 (current-time))) ;; the stupid emacs time
-	 (tstamp (gethash nick sr-nick-event-hash)))
-    (unless (and tstamp (> (- now-lsb tstamp) sauron-nick-insensitivity))
+   ;; we only store the lsb, which is good enough for 2^16 seconds.
+  (let* ((now-lsb (nth 1 (current-time))) ;; the stupid emacs time
+	 (tstamp (gethash nick sr-nick-event-hash))
+	  (diff (when tstamp (- now-lsb tstamp))))
+    ;; (if diff
+    ;;   (message "%S last seen %S secs ago" nick diff)
+    ;;   (message "%S never seen before" nick))
+    (when (or (not diff) (> diff sauron-nick-insensitivity))
+  ;;    (message "%S is fresh; last seen %S sec(s) ago" nick diff)
       (puthash nick now-lsb sr-nick-event-hash))))
+
 
 (defun sr-calibrated-prio (msg props prio)
   "Re-calibrate the PRIO for MSG with PROPS, based on:
@@ -204,8 +209,8 @@ timestamp."
 2) if the nick (sender) of MSG matches `sauron-watch-nick', raise the priority.
 3) if we raised the priority of nick in the last `sauron-nick-insensitity' seconds,
    lower the priority.
-Returns the new priority."  
-  (let ((prio prio)
+Returns the new priority."
+  (let ((prio prio) (oldprio prio)
 	 (nick (plist-get props :sender)))
     ;; check for watch patterns
     (when (sr-pattern-matches msg sauron-watch-patterns 'string-match)
@@ -214,11 +219,13 @@ Returns the new priority."
     (when (and nick (sr-pattern-matches msg sauron-watch-nicks 'string=))
       (incf prio))
     ;; did we already raise an event for nick recently?
-    (when (and nick (sr-recent-nick-event nick))
+    (when (and nick (not (sr-fresh-nick-event nick)))
+      ;;(message "%S prio: %d->%d" nick oldprio prio)
       (decf prio))
+;;    (message "%S prio: %d->%d" nick oldprio prio)
     prio))
 
-   
+
 ;; the main work horse functions
 (defun sauron-add-event (origin prio msg &optional func props)
   "Add a new event to the Sauron log with:
@@ -234,7 +241,7 @@ PROPS an origin-specific property list that will be passed to the hook funcs."
     (error "sauron-add-event: ORIGIN must be a symbol, not %S" origin))
   (unless (and (integerp prio) (>= prio 0) (<= prio 5))
     (error "sauron-add-event: PRIO  ∈ [0..5], not %S" prio))
-  (unless (stringp msg) 
+  (unless (stringp msg)
     (error "sauron-add-event: MSG must be a string, not %S" msg))
   (unless (or (null func) (functionp func))
     (error "sauron-add-event: FUNC must be nil or a function, not %S"
@@ -244,8 +251,9 @@ PROPS an origin-specific property list that will be passed to the hook funcs."
 
   ;; recalculate the prio, based on watchwords, nicks involved, and recent
   ;; history.
+;;  (message "old prio: %d" prio)
   (setq prio (sr-calibrated-prio msg props prio))
-;;  (message "%S %S" prio msg)
+;;  (message "new prio:%S msg:%S" prio msg)
   ;; we allow this event only if it's prio >= `sauron-min-priority' and
   ;; running the `sauron-event-block-functions' hook evaluates to nil.
   (when (and (>= prio sauron-min-priority)
@@ -260,8 +268,8 @@ PROPS an origin-specific property list that will be passed to the hook funcs."
 		     ?m msg)))
 	    ;; add the callback as a text property, remove any embedded newlines,
 	    ;; truncate if necessary append a newline
-	    (line (concat 
-		    (truncate-string-to-width 
+	    (line (concat
+		    (truncate-string-to-width
 		      (propertize (replace-regexp-in-string "\n" " " line)
 			'callback func)
 		      sauron-max-line-length 0 nil t)
@@ -285,7 +293,7 @@ any special faces from the line."
   	  (inhibit-read-only t))
     ;; remove the funky faces
     (put-text-property (line-beginning-position) (line-end-position)
-      'face 'default) 
+      'face 'default)
     (if callback
       (funcall callback)
       (message "No callback defined for this line."))))
@@ -327,7 +335,7 @@ one."
 	  (let ((frame-params
 		  (append
 		    '((tool-bar-lines . 0) (menu-bar-lines . 0))
-		    (x-parse-geometry sauron-frame-geometry))))		  
+		    (x-parse-geometry sauron-frame-geometry))))
 	    (modify-frame-parameters nil frame-params)))
 	(switch-to-buffer sr-buffer)))
       (set-window-dedicated-p (selected-window) t)))
@@ -339,7 +347,7 @@ one."
     (error "No sauron buffer found"))
   (let* ((win (get-buffer-window sr-buffer t))
 	  (frame (and win (window-frame win))))
-    (if (and sauron-separate-frame (frame-live-p frame)) 
+    (if (and sauron-separate-frame (frame-live-p frame))
       (make-frame-invisible frame))))
 ;; TODO: handle the non-separate frame case
 
@@ -368,7 +376,7 @@ one."
       (error "Target buffer not found"))
     ;; remove the funky faces
     (put-text-property (line-beginning-position)
-      (line-end-position) 'face 'default) 
+      (line-end-position) 'face 'default)
     (switch-to-buffer-other-windown target)))
 
 
@@ -425,6 +433,6 @@ sauron buffer."
     (error "zenity not found"))
   (call-process "zenity" nil 0 nil "--info" "--title=Sauron"
     (concat "--text=" msg)))
- 
-  
+
+
 (provide 'sauron)
