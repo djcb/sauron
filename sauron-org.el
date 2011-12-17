@@ -37,10 +37,9 @@
 (defvar sr-org-running nil
   "*internal* Whether the org-backend is active.")
 
-
 (defun sauron-org-start ()
   "Start watching org (appt)."
-  (if (not (boundp 'appt-disp-window))
+  (if (not (boundp 'appt-disp-window-function))
     (message "sauron-org not available")
     (unless sr-org-running
       (setq ;; save the old one, set the new one
