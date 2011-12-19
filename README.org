@@ -210,7 +210,6 @@ browser will visit the link.
 :     "/org/gnu/Emacs/Sauron"                     \
 :    "org.gnu.Emacs.Sauron.AddMsgEvent"           \
 :    string:shell uint32:3 string:"Hello, world!"
-:}
 #+end_src
 The three parameters are resp. the sender ('shell'), the priority ('3' in the
 example), and message. This will show up in the sauron buffer (if the priority
@@ -226,7 +225,6 @@ Call-script-when-torrent-is-completed), add something like:
 :     "/org/gnu/Emacs/Sauron"                     \
 :    "org.gnu.Emacs.Sauron.AddMsgEvent"           \
 :    string:Transmission uint32:3 string:"Torrent completed: $TR_TORRENT_NAME"
-:}
 #+end_src
 
 I'm sure you can think of other useful applications.
@@ -251,32 +249,32 @@ I'm sure you can think of other useful applications.
 ** sample configuration
 
 #+begin_src emacs-lisp
-(require 'sauron)
-
-(setq
-  sauron-max-line-length 120 
-
-  sauron-watch-patterns
-  '("emacs-fu" "emacsfu" "wombat" "capybara" "neanderthal" "\\bmu\\b")
-
-  sauron-watch-nicks
-  '("Tom" "Dick" "Harry"))
-
-;; some sound/light effects for certain events
-(add-hook 'sauron-event-added-functions
-  (lambda (origin prio msg &optional props)
-    (if (string-match "ping" msg) ;; if somebody pings me, play a soun
-            (sauron-sox "/usr/share/sounds/ping.wav")) ;; 
-    (if (>= prio 4)
-      (progn
-	(sauron-sox "/usr/share/sounds/wake-up-now.wav")
-	(sauron-gnome-osd (format "%S: %s" origin msg) 10)))
-    t))
-
-;; block some events
-(add-hook 'sauron-event-block-functions
-  (lambda (origin prio msg &optional props)
-    (or
-      (string-match "^*** Users" msg))))    
+:(require 'sauron)
+:
+:(setq
+:  sauron-max-line-length 120 
+:
+:  sauron-watch-patterns
+:  '("emacs-fu" "emacsfu" "wombat" "capybara" "neanderthal" "\\bmu\\b")
+:
+:  sauron-watch-nicks
+:  '("Tom" "Dick" "Harry"))
+:
+:;; some sound/light effects for certain events
+:(add-hook 'sauron-event-added-functions
+:  (lambda (origin prio msg &optional props)
+:    (if (string-match "ping" msg) ;; if somebody pings me, play a soun
+:            (sauron-sox "/usr/share/sounds/ping.wav")) ;; 
+:    (if (>= prio 4)
+:      (progn
+:	(sauron-sox "/usr/share/sounds/wake-up-now.wav")
+:	(sauron-gnome-osd (format "%S: %s" origin msg) 10)))
+:    t))
+:
+:;; block some events
+:(add-hook 'sauron-event-block-functions
+:  (lambda (origin prio msg &optional props)
+:    (or
+:      (string-match "^*** Users" msg))))    
 #+end_src
 
