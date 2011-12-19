@@ -163,13 +163,73 @@
 
 ** the backend modules
 
-   TODO
+   Currently, three backend modules have been implemented - ERC, org-mode and
+   d-bus. Hopefully, more will follow.
 
 *** erc
 
+    The ERC module check all IRC PRIVMSG messages, and JOIN/LEAVE/QUIT
+    messages. PRIVMSG includes the messages sent to any channel by anyone. These
+    message are given (by default) priority 2, so (by default) they do not show
+    up in your sauron buffer.
+
+    However, messages that match one of your =sauron-watch-patterns= or
+    =sauron-watch-nicks= are getting a higher priority, or messages that are
+    private messages directed at you. However, after sending a message, you
+    won't get notified from the same nick for another 60 seconds (by default --
+    see =sauron-nick-insensitivity=), so you won't get e.g. sound effects for
+    each message in a private conversation.
+
 *** org-mode / appt
 
+    For org-mode, sauron adds functionality to =appt-disp-window-function= (but
+    leaves it intact), so that whenever some event is near, you get a
+    notification with priority 3, 4, 5 for respectively, appointment in 15 min,
+    10 min and <10 minutes.
+
 *** d-bus
+
+    The dbus backend allows you to get events from outside emacs; it listens for
+    two messages, =AddUrlEvent= and =AddMsgEvent=. You can call them like this:
+
+#+begin_src sh
+:    dbus-send --session --dest="org.gnu.Emacs"	   \
+:    "/org/gnu/Emacs/Sauron"                       \
+:    "org.gnu.Emacs.Sauron.AddUrlEvent"            \
+:    string:shell uint32:3 string:"Link: Emacs-Fu" \
+:    string:"http://emacs-fu.blogspot.com"
+#+end_src
+The four parameters are resp. the sender ('shell'), the priority ('3' in the
+example), a description and a URL. This will show up in the sauron buffer (if
+the priority is high enough), and if you activate the event (press RET), your
+browser will visit the link.
+
+#+begin_src sh
+:    dbus-send --session          	          \
+:    --dest="org.gnu.Emacs"	                  \
+:     "/org/gnu/Emacs/Sauron"                     \
+:    "org.gnu.Emacs.Sauron.AddMsgEvent"           \
+:    string:shell uint32:3 string:"Hello, world!"
+:}
+#+end_src
+The three parameters are resp. the sender ('shell'), the priority ('3' in the
+example), and message. This will show up in the sauron buffer (if the priority
+is high enough).
+
+One use for these kind of messages is to warn you when for example a torrent has
+been completed in 'Transmission'. In the torrent-completion script (see Preferences/
+Call-script-when-torrent-is-completed), add something like:
+#+begin_src sh
+#+begin_src sh
+:    dbus-send --session          	          \
+:    --dest="org.gnu.Emacs"	                  \
+:     "/org/gnu/Emacs/Sauron"                     \
+:    "org.gnu.Emacs.Sauron.AddMsgEvent"           \
+:    string:Transmission uint32:3 string:"Torrent completed: $TR_TORRENT_NAME"
+:}
+#+end_src
+
+I'm sure you can think of other useful applications.
 
     
 ** adding new modules
@@ -190,5 +250,33 @@
 
 ** sample configuration
 
-   TODO
+#+begin_src emacs-lisp
+(require 'sauron)
+
+(setq
+  sauron-max-line-length 120 
+
+  sauron-watch-patterns
+  '("emacs-fu" "emacsfu" "wombat" "capybara" "neanderthal" "\\bmu\\b")
+
+  sauron-watch-nicks
+  '("Tom" "Dick" "Harry"))
+
+;; some sound/light effects for certain events
+(add-hook 'sauron-event-added-functions
+  (lambda (origin prio msg &optional props)
+    (if (string-match "ping" msg) ;; if somebody pings me, play a soun
+            (sauron-sox "/usr/share/sounds/ping.wav")) ;; 
+    (if (>= prio 4)
+      (progn
+	(sauron-sox "/usr/share/sounds/wake-up-now.wav")
+	(sauron-gnome-osd (format "%S: %s" origin msg) 10)))
+    t))
+
+;; block some events
+(add-hook 'sauron-event-block-functions
+  (lambda (origin prio msg &optional props)
+    (or
+      (string-match "^*** Users" msg))))    
+#+end_src
 
