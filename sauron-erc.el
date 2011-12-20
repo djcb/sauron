@@ -113,6 +113,7 @@ The following events are erc-track
 	  (msg (erc-response.contents parsed))
 	  (prio
 	    (cond
+	      ((/= (string-match "" msg) nil) 1) ;; ignore IRC meta messages
 	      ((string= sender "root") 2)    ;; bitlbee stuff; low-prio
 	      ((string= me target)     3)    ;; private message for me => prio 3
 	      ((string-match me msg)   3)    ;; I'm mentioned => prio 3
@@ -121,8 +122,9 @@ The following events are erc-track
       'erc
       prio
       (concat
-	(propertize sender 'face 'sauron-highlight1-face) "→"
-	(propertize target 'face 'sauron-highlight2-face) " "
+	(propertize sender 'face 'sauron-highlight1-face) "@"
+	(propertize target 'face 'sauron-highlight2-face)
+	(propertize " says " 'face 'sauron-highlight1-face)
 	msg)
       ;; FIXME: assumes we open separate window
       (lexical-let ((sender sender) (target target) (me me)) 
