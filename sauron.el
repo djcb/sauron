@@ -31,7 +31,7 @@
 (defvar sauron-modules
   '(sauron-erc sauron-dbus sauron-org)
   "List of sauron modules to use. Currently supported are:
-sauron-erc and sauron-dbus.")
+sauron-erc, sauron-org and sauron-dbus.")
 
 ;; user settable variables
 (defvar sauron-separate-frame t
@@ -108,7 +108,7 @@ PROPS is a backend-specific plist.")
   "Face for a sauron event message.")
 
 (defface sauron-origin-face
-  '((t :inherit font-lock-pseudo-keyword-face))
+  '((t :inherit font-lock-variable-name-face))
   "Face for a sauron event origin.")
 
 ;; these highlight faces are for use in backends
@@ -127,11 +127,13 @@ PROPS is a backend-specific plist.")
 ;;(setq sauron-mode-map nil)
 (defvar sauron-mode-map
   (let ((map (make-sparse-keymap)))
-    (define-key map "c"         'sauron-clear)
-    (define-key map (kbd "RET") 'sauron-activate-event)
+    (define-key map "c"               'sauron-clear)
+    (define-key map (kbd "RET")       'sauron-activate-event) 
+    (define-key map (kbd "<down-mouse-1>") 'sauron-activate-event)
     map)
   "Keymap for the sauron buffer.")
 (fset 'sauron-mode-map sauron-mode-map)
+
 
 (defvar sr-nick-event-hash nil
   "*internal* hash of nicks and the last time we raised an 'event'
