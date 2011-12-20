@@ -59,15 +59,17 @@ could be lists, too."
   (let* ((left (string-to-number minutes-to-app))
 	  (prio ;; priorities, hard-coded....
 	    (cond
-	      ((> left 15) 3)
-	      ((> left 10) 4)
-	      ((< left 10) 5))))
+	      ((= left 15) 3)
+	      ((= left 10) 3)
+	      ((= left 5)  4)
+	      ((= left 2)  5)
+	      (t 2))))
     (sauron-add-event 'org prio
       (format "%s minutes left before %s" minutes-to-app msg)
       'org-agenda-list
       `(:minutes-left ,left :msg ,msg))
     ;; call the old function as well, if defined
     (when sauron-org-old-appt-func
-      (funcall sauron-org-old-appt-func minutes-to-app new-time msg))))
+      (funcall 'sauron-org-old-appt-func minutes-to-app new-time msg))))
   
 (provide 'sauron-org)  
