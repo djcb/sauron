@@ -9,20 +9,23 @@
    (emacs) world around you. Events are things like 'appointment in 5 minutes',
    'bob pinged you on IRC', 'torrent download is complete' etc. Sauron shows
    those events like a list -- basically like a log. You can 'activate' an event
-   by clicking it. 
+   by either pressing =RET= when point is on it, or clicking it with the left
+   mouse button (=<down-mouse-1>=).
 
    When activated, it can execute some arbitrary function -- for example in the
    case of IRC (ERC), it will switch you to the buffer (channel) it originated
    from. It's a bit of a generalization of what /tracking mode/ does in ERC (the
    emacs IRC client), and that is in fact how it started.
 
-   For my work, I need to keep track of a bunch of ERC (IRC) channels and at the
-   same time not forget to go to meetings, even when I'm concentrating on
-   something else. So, I want something tweakable to provide me with the right
-   balance between obnoxiousness and ignorability. Thus, sauron was born.
+   For my work, I need to keep track of a bunch of internal ERC (IRC) channels
+   and at the same time not forget to go to meetings, even when I'm
+   concentrating on something else. So, I want something tweakable to provide me
+   with the right balance between obnoxiousness and ignorability. Thus, sauron
+   was born.
    
-   There's an increasing number of hooks and tunables in sauron, but I strive
-   for it to be useful with minimal configuration.
+   There's an increasing number of hooks and tunables in sauron, which allows
+   you to fine-tune the behavior. However, I strive for it to be useful with
+   minimal configuration.
 
 ** getting started
 
@@ -41,7 +44,7 @@
    =sauron-start= will pop-up a new frame (window) which will show events coming
    from any of its sources (i.e.., ERC, org-mode appointments and over
    d-bus). You can 'activate' a source by pressing "Enter" with the cursor on
-   the event, which will then take some backend-specific action. 
+   the event, which will then take some backend-specific action.
 
    For example, for the ERC-backend, it will transfer you to the buffer
    (IRC-channel) where said event happened. 
@@ -70,7 +73,7 @@
     which have a priority that is lower that =sauron-min-priority= (default
     value: 3).
 
-    For example, all message written on IRC (i.e., coming from the ERC-backend)
+    For example, all messages written on IRC (i.e., coming from the ERC-backend)
     which are *not* directed towards you have priority 2 -- you will not see
     them. And that is probably a good idea.
 
@@ -79,7 +82,8 @@
     You can specify a list of patterns (regular expressions) which sauron should
     check. An event matching any of the patterns in the list will have its
     priority raised by 1 point. If that one point raises it to
-    `sauron-min-priority' level, it will now show up in the Sauron buffer.
+    `sauron-min-priority' or higher level, it will now show up in the Sauron
+    buffer.
 
     =sauron-watch-patterns= is useful if you want to check if, for example, your
     name, or your hobby project is mentioned in some IRC channel.
@@ -96,7 +100,8 @@
     You can also specify a list of nicks to watch for; nicks are matched using a
     string-match (not a regular expression). A nick matching any of the nicks in
     the list will have its priority raised by 1 point. If that one point raises
-    it to `sauron-min-priority' level, it will now show up in the Sauron buffer.
+    it to `sauron-min-priority' or higher level, it will now show up in the
+    Sauron buffer.
 
 *** don't get swamped by a certain nick
 
@@ -157,7 +162,7 @@
 :      (sauron-sox "/usr/share/sounds/ping.wav")
 :      (sauron-sox "/usr/share/sounds/something-happened.wav"))
 :    (when (>= prio 4)
-:	(sauron-sox "/common/sounds/uhoh.wav")
+:	(sauron-sox "/usr/share/sounds/uhoh.wav")
 :	(sauron-gnome-osd msg 10))))
     #+end_example
 
@@ -184,8 +189,12 @@
 
     For org-mode, sauron adds functionality to =appt-disp-window-function= (but
     leaves it intact), so that whenever some event is near, you get a
-    notification with priority 3, 4, 5 for respectively, appointment in 15 min,
-    10 min and <10 minutes.
+    notification with the following priorities:
+    - 15 minutes left: priority 3
+    - 10 minutes left: priority 3
+    - 5  minutes left: priority 4
+    - 2  minutes left: priority 5
+    For all other minutes, you'll get events with priority 2.
 
 *** d-bus
 
@@ -253,28 +262,32 @@ I'm sure you can think of other useful applications.
 :
 :(setq
 :  sauron-max-line-length 120 
-:
+:  
+:  ;; you probably want to add your own nickname to the these patterns
 :  sauron-watch-patterns
 :  '("emacs-fu" "emacsfu" "wombat" "capybara" "neanderthal" "\\bmu\\b")
 :
+:  ;; you probably want to add you own nick here as well
 :  sauron-watch-nicks
 :  '("Tom" "Dick" "Harry"))
 :
 :;; some sound/light effects for certain events
 :(add-hook 'sauron-event-added-functions
 :  (lambda (origin prio msg &optional props)
-:    (if (string-match "ping" msg) ;; if somebody pings me, play a soun
-:            (sauron-sox "/usr/share/sounds/ping.wav")) ;; 
-:    (if (>= prio 4)
-:      (progn
-:	(sauron-sox "/usr/share/sounds/wake-up-now.wav")
-:	(sauron-gnome-osd (format "%S: %s" origin msg) 10)))
-:    t))
+:    (if (string-match "ping" msg)
+:      ;;(sauron-sox "/usr/share/sounds/ping.wav")
+:      (sauron-sox "/usr/share/sounds/message-new-instant.oga.wav"))
+:    (cond
+:      ((= prio 3) (sauron-sox "/usr/share/sounds/message-new-instant.oga.wav"))
+:      ((= prio 4) (sauron-sox "/usr/share/sounds/uhoh.au"))
+:      ((= prio 5)
+:	(sauron-sox "/usr/share/sounds/phone-incoming-call.oga.wav")
+:	(sauron-gnome-osd(format "%S: %s" origin msg) 5)))))
 :
-:;; block some events
+:;; events to ignore 
 :(add-hook 'sauron-event-block-functions
 :  (lambda (origin prio msg &optional props)
 :    (or
-:      (string-match "^*** Users" msg))))    
+:      (string-match "^*** Users" msg)))) ;; don't notify on IRC spam
 #+end_src
 
