@@ -9,12 +9,12 @@
 
 ;; This file is not part of GNU Emacs.
 ;;
-;; GNU Emacs is free software: you can redistribute it and/or modify
+;; Sauron is free software: you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
 ;; the Free Software Foundation, either version 3 of the License, or
 ;; (at your option) any later version.
 
-;; GNU Emacs is distributed in the hope that it will be useful,
+;; Sauron is distributed in the hope that it will be useful,
 ;; but WITHOUT ANY WARRANTY; without even the implied warranty of
 ;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ;; GNU General Public License for more details.
@@ -115,7 +115,7 @@ The following events are erc-track
 	    (cond
 	      ((/= (string-match "" msg) nil) 1) ;; ignore IRC meta messages
 	      ((string= sender "root") 2)    ;; bitlbee stuff; low-prio
-	      ((string= me target)     3)    ;; private message for me => prio 3
+	      ((string= me target)     4)    ;; private message for me => prio 3
 	      ((string-match me msg)   3)    ;; I'm mentioned => prio 3
 	      (t                       2)))) ;; default 
     (sauron-add-event
