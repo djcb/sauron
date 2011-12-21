@@ -64,7 +64,7 @@ prevent large numbers of beeps, light effects when dealing with
 nick. Must be < 65536")
 
 
-(defvar sauron-event-format "%t %o %m"
+(defvar sauron-event-format "%t %o(%p) %m"
   "Format of a sauron event line. The following format parameters are available:
 %t: the timestamp (see `sauron-timestamp-format' for its format)
 %p: priority of the event (an integer [1..5])
