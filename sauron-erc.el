@@ -4,7 +4,7 @@
 
 ;; Author: Dirk-Jan C. Binnema <djcb@djcbsoftware.nl>
 ;; Maintainer: Dirk-Jan C. Binnema <djcb@djcbsoftware.nl>
-;; Keywords: 
+;; Keywords:
 ;; Version: 0.0
 
 ;; This file is not part of GNU Emacs.
@@ -59,36 +59,36 @@ The following events are erc-track
     (remove-hook 'erc-server-PRIVMSG-functions 'sr-erc-PRIVMSG-hook-func)
     (remove-hook 'erc-server-JOIN-functions 'sr-erc-JOIN-hook-func)
     (remove-hook 'erc-server-PART-functions 'sr-erc-PART-hook-func)
-    (remove-hook 'erc-server-QUIT-functions 'sr-erc-QUIT-hook-func)    
+    (remove-hook 'erc-server-QUIT-functions 'sr-erc-QUIT-hook-func)
     (setq sr-erc-running nil)))
-
 
 (defun sr-erc-hook-func (proc parsed event)
   "Hook function, to be called for erc-matched-hook."
-  (let* ( (me     (erc-current-nick))
-	  (sender (car (erc-parse-user (erc-response.sender parsed))))
-	  (target (car (erc-response.command-args parsed)))
-	  (msg (erc-response.contents parsed)))
-    (sauron-add-event
-      'erc
-      2
-      (concat (propertize sender 'face 'sauron-highlight1-face) " has " 
-	(case event
-	  ('quit (concat "quit (" msg ")"))
-	  ('part (concat "left "
-		   (propertize target 'face 'sauron-highlight2-face)
-		   " (" msg ")"))
-	  ('join (concat "joined "
-		   (propertize target 'face 'sauron-highlight2-face)))))
-      ;; FIXME: assumes we open separate window
-      (when (eq event 'join)
-	(lexical-let ((target target)) 
-	  (lambda()  (sauron-switch-to-buffer target))))
-      `( :event   ,event
-	 :sender ,sender
-	 :me     ,me
-	 :target ,target
-	 :msg    ,msg))))
+  (sr-ignore-errors-maybe ;; ignore errors unless sauron-debug is non-nil
+    (let* ( (me     (erc-current-nick))
+	    (sender (car (erc-parse-user (erc-response.sender parsed))))
+	    (target (car (erc-response.command-args parsed)))
+	    (msg (erc-response.contents parsed)))
+      (sauron-add-event
+	'erc
+	2
+	(concat (propertize sender 'face 'sauron-highlight1-face) " has "
+	  (case event
+	    ('quit (concat "quit (" msg ")"))
+	    ('part (concat "left "
+		     (propertize target 'face 'sauron-highlight2-face)
+		     " (" msg ")"))
+	    ('join (concat "joined "
+		     (propertize target 'face 'sauron-highlight2-face)))))
+	;; FIXME: assumes we open separate window
+	(when (eq event 'join)
+	  (lexical-let ((target target))
+	    (lambda()  (sauron-switch-to-buffer target))))
+	`( :event  ,event
+	   :sender ,sender
+	   :me     ,me
+	   :target ,target
+	   :msg    ,msg)))))
 
 
 (defun sr-erc-JOIN-hook-func (proc parsed)
@@ -106,39 +106,37 @@ The following events are erc-track
 
 (defun sr-erc-PRIVMSG-hook-func (proc parsed)
   "Hook function, to be called for erc-matched-hook."
-;;  (message "PRIVMSG %S" parsed)
-  (let* ( (me     (erc-current-nick))
-	  (sender (car (erc-parse-user (erc-response.sender parsed))))
-	  (target (car (erc-response.command-args parsed)))
-	  (msg (erc-response.contents parsed))
-	  (prio
-	    (cond
-	      ((/= (string-match "" msg) nil) 1) ;; ignore IRC meta messages
-	      ((string= sender "root") 2)    ;; bitlbee stuff; low-prio
-	      ((string= me target)     4)    ;; private message for me => prio 3
-	      ((string-match me msg)   3)    ;; I'm mentioned => prio 3
-	      (t                       2)))) ;; default 
-    (sauron-add-event
-      'erc
-      prio
-      (concat
-	(propertize sender 'face 'sauron-highlight1-face) "@"
-	(propertize target 'face 'sauron-highlight2-face)
-	(propertize " says " 'face 'sauron-highlight1-face)
-	msg)
-      ;; FIXME: assumes we open separate window
-      (lexical-let ((sender sender) (target target) (me me)) 
-	(lambda()  (sauron-switch-to-buffer
-		     (if (string= target me) sender target))))
-      `(:event   privmsg
-	 :sender ,sender
-	 :me     ,me
-	 :target ,target
-	 :msg    ,msg))))
-
-
-
+  (sr-ignore-errors-maybe ;; ignore errors unless sauron-debug is non-nil
+    (let* ( (me     (erc-current-nick))
+	    (sender (car (erc-parse-user (erc-response.sender parsed))))
+	    (target (car (erc-response.command-args parsed)))
+	    (msg (erc-response.contents parsed))
+	    (prio
+	      (cond
+		((numberp (string-match "" msg)) 1)    ;; ignore IRC meta messages
+		((string= sender "root")           2)    ;; bitlbee stuff; low-prio
+		((string= me target)               3)    ;; private msg for me => prio 4
+		((string-match me msg)             3)    ;; I'm mentioned => prio 3
+		(t                                 2)))) ;; default
+      (sauron-add-event
+	'erc
+	prio
+	(concat
+	  (propertize sender 'face 'sauron-highlight1-face) "@"
+	  (propertize target 'face 'sauron-highlight2-face)
+	  (propertize " says " 'face 'sauron-highlight1-face)
+	  msg)
+	;; FIXME: assumes we open separate window
+	(lexical-let* ((bufname (if (string= target me) sender target))
+			(buf (and bufname) (get-buffer bufname)))
+	  (lambda()
+	    (if (buffer-live-p buf)
+	      (sauron-switch-to-buffer buf)
+	      (message "Buffer %S not available" bufname))))
+	`( :event   privmsg
+	   :sender ,sender
+	   :me     ,me
+	   :target ,target
+	   :msg    ,msg)))))
 
 (provide 'sauron-erc)
-
-
