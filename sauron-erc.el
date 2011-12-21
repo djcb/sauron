@@ -103,6 +103,10 @@ The following events are erc-track
   "PART hook function."
   (sr-erc-hook-func proc parsed 'part))
 
+(defun sr-erc-msg-clean (msg)
+  "Clean IRC escaped stuff from messages."
+  (when msg ;; remove the IRC meta crap
+    (replace-regexp-in-string ".*\\(\\|\\)" msg "")))
 
 (defun sr-erc-PRIVMSG-hook-func (proc parsed)
   "Hook function, to be called for erc-matched-hook."
@@ -110,7 +114,7 @@ The following events are erc-track
     (let* ( (me     (erc-current-nick))
 	    (sender (car (erc-parse-user (erc-response.sender parsed))))
 	    (target (car (erc-response.command-args parsed)))
-	    (msg (erc-response.contents parsed))
+	    (msg (sr-erc-msg-clean (erc-response.contents parsed)))
 	    (prio
 	      (cond
 		((numberp (string-match "" msg)) 1)    ;; ignore IRC meta messages
