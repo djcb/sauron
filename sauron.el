@@ -71,6 +71,9 @@ nick. Must be < 65536")
 %o: the origin of the event
 %m: the message for this event.")
 
+(defvar sauron-debug nil
+  "Whether do show errors.")
+
 (defvar sauron-timestamp-format "%Y-%m-%d %H:%M:%S"
   "Format for the timestamps, as per `format-time-string'.")
 
@@ -128,7 +131,7 @@ PROPS is a backend-specific plist.")
 (defvar sauron-mode-map
   (let ((map (make-sparse-keymap)))
     (define-key map "c"               'sauron-clear)
-    (define-key map (kbd "RET")       'sauron-activate-event) 
+    (define-key map (kbd "RET")       'sauron-activate-event)
     (define-key map (kbd "<down-mouse-1>") 'sauron-activate-event)
     map)
   "Keymap for the sauron buffer.")
@@ -210,16 +213,27 @@ timestamp."
    if nick matches `sauron-watch-nicks', prio = prio + 1
 3) if prio > 5, prio = 5
 Returns the new priority."
-  (let ((prio prio) (oldprio prio)
+  (let ((prio prio)
 	 (nick (plist-get props :sender)))
-    (when (sr-fresh-nick-event nick) ;; 
+    (when (sr-fresh-nick-event nick) ;;
       (when (sr-pattern-matches msg sauron-watch-patterns 'string-match)
 	(incf prio))
       (when (sr-pattern-matches nick sauron-watch-nicks 'string=)
 	(incf prio))
       (when (> prio 5)
-	(setq prio 5)) 
-      prio)))
+	(setq prio 5)))
+      prio))
+
+
+
+(defmacro sr-ignore-errors-maybe (&rest body)
+  "If `sauron-debug' is non-nil, execute BODY; otherwise behave
+like `ignore-errors'."
+  (if sauron-debug
+    (progn ,@body)
+    (declare (debug t) (indent 0))
+    `(condition-case nil (progn ,@body) (error nil))))
+
 
 
 ;; the main work horse functions
@@ -231,54 +245,55 @@ MSG a string describing the event.
 Then, optionally:
 FUNC if non-nil, a function called when user activates the event in the log.
 PROPS an origin-specific property list that will be passed to the hook funcs."
-  ;; since this is called by possibly external modules, scrutinize the params
-  ;; a bit more, to make debugging easier
-  (unless (symbolp origin)
-    (error "sauron-add-event: ORIGIN must be a symbol, not %S" origin))
-  (unless (and (integerp prio) (>= prio 0) (<= prio 5))
-    (error "sauron-add-event: PRIO  ∈ [0..5], not %S" prio))
-  (unless (stringp msg)
-    (error "sauron-add-event: MSG must be a string, not %S" msg))
-  (unless (or (null func) (functionp func))
-    (error "sauron-add-event: FUNC must be nil or a function, not %S"
-      func))
-  (unless (or (null props) (listp props))
-    (error "sauron-add-event: PROPS must be nil or a plist, not %S" props))
-
-  ;; recalculate the prio, based on watchwords, nicks involved, and recent
-  ;; history.
-;;  (message "old prio: %d" prio)
-  (setq prio (sr-calibrated-prio msg props prio))
-;;  (message "new prio:%S msg:%S" prio msg)
-  ;; we allow this event only if it's prio >= `sauron-min-priority' and
-  ;; running the `sauron-event-block-functions' hook evaluates to nil.
-  (when (and (>= prio sauron-min-priority)
-	  (null (run-hook-with-args-until-success
-		  'sauron-event-block-function origin prio msg props)))
-    (let* ((line (format-spec sauron-event-format
-		   (format-spec-make
-		     ?t (propertize (format-time-string sauron-timestamp-format
-				      (current-time)) 'face 'sauron-timestamp-face)
-		     ?p (format "%d" prio)
-		     ?o (propertize (symbol-name origin) 'face 'sauron-origin-face)
-		     ?m msg)))
-	    ;; add the callback as a text property, remove any embedded newlines,
-	    ;; truncate if necessary append a newline
-	    (line (concat
-		    (truncate-string-to-width
-		      (propertize (replace-regexp-in-string "\n" " " line)
-			'callback func)
-		      sauron-max-line-length 0 nil t)
-		    "\n"))
-	    (inhibit-read-only t))
-      (sr-create-buffer-maybe) ;; create buffer if it did not exist yet
-      (with-current-buffer sr-buffer
-	(goto-char (point-max))
-	(insert line))
-      (run-hook-with-args
-	'sauron-event-added-functions origin prio msg props))))
-
-
+  (sr-ignore-errors-maybe ;; ignore errors unless we're debugging
+    ;; since this is called by possibly external modules, scrutinize the params
+    ;; a bit more, to make debugging easier
+    (unless (symbolp origin)
+      (error "sauron-add-event: ORIGIN must be a symbol, not %S" origin))
+    (unless (and (integerp prio) (>= prio 0) (<= prio 5))
+      (error "sauron-add-event: PRIO  ∈ [0..5], not %S" prio))
+    (unless (stringp msg)
+      (error "sauron-add-event: MSG must be a string, not %S" msg))
+    (unless (or (null func) (functionp func))
+      (error "sauron-add-event: FUNC must be nil or a function, not %S"
+	func))
+    (unless (or (null props) (listp props))
+      (error "sauron-add-event: PROPS must be nil or a plist, not %S" props))
+    
+    ;; recalculate the prio, based on watchwords, nicks involved, and recent
+    ;; history.
+    ;;  (message "old prio: %d" prio)
+    (setq prio (sr-calibrated-prio msg props prio))
+    ;;  (message "new prio:%S msg:%S" prio msg)
+    ;; we allow this event only if it's prio >= `sauron-min-priority' and
+    ;; running the `sauron-event-block-functions' hook evaluates to nil.
+    (when (and (>= prio sauron-min-priority)
+	    (null (run-hook-with-args-until-success
+		    'sauron-event-block-function origin prio msg props)))
+      (let* ((line (format-spec sauron-event-format
+		     (format-spec-make
+		       ?t (propertize (format-time-string sauron-timestamp-format
+					(current-time)) 'face 'sauron-timestamp-face)
+		       ?p (format "%d" prio)
+		       ?o (propertize (symbol-name origin) 'face 'sauron-origin-face)
+		       ?m msg)))
+	      ;; add the callback as a text property, remove any embedded newlines,
+	      ;; truncate if necessary append a newline
+	      (line (concat
+		      (truncate-string-to-width
+			(propertize (replace-regexp-in-string "\n" " " line)
+			  'callback func)
+			sauron-max-line-length 0 nil t)
+		      "\n"))
+	      (inhibit-read-only t))
+	(sr-create-buffer-maybe) ;; create buffer if it did not exist yet
+	(with-current-buffer sr-buffer
+	  (goto-char (point-max))
+	  (insert line))
+	(run-hook-with-args
+	  'sauron-event-added-functions origin prio msg props)))))
+  
+  
 (defun sauron-activate-event ()
   "Activate the callback for the current sauron line, and remove
 any special faces from the line."
@@ -393,8 +408,9 @@ sauron buffer."
   sr-buffer)
 
 
-;; some helper function for writing event hooks
-(defun sauron-aplay (path)
+
+;; some convenience function sound/light fx in event hooks
+(defun sauron-fx-aplay (path)
   "Play a wav-file at PATH using program aplay."
   (unless (and (file-readable-p path) (file-regular-p path))
     (error "%s is not a playable file" path))
@@ -402,7 +418,7 @@ sauron buffer."
     (error "aplay not found"))
   (call-process "aplay" nil 0 nil "-q" "-N" path))
 
-(defun sauron-sox (path)
+(defun sauron-fx-sox (path)
   "Play a wav-file at PATH using program sox."
   (unless (and (file-readable-p path) (file-regular-p path))
     (error "%s is not a playable file" path))
@@ -410,7 +426,7 @@ sauron buffer."
     (error "sox not found"))
   (call-process "sox" nil 0 nil "--volume=9" "-V0" "-q" path "-d"))
 
-(defun sauron-gnome-osd (msg secs)
+(defun sauron-fx-gnome-osd (msg secs)
   "Display MSG on your screen for SECS second... for really important stuff."
   (unless (executable-find "gnome-osd-client")
     (error "gnome-osd-client not found"))
@@ -423,12 +439,11 @@ sauron buffer."
 	    "</message>")))
     (call-process "gnome-osd-client" nil 0 nil "-f" "--dbus" xmlmsg)))
 
-(defun sauron-zenity (msg)
+(defun sauron-fx-zenity (msg)
   "Pop-up a zenity window with MSG."
   (unless (executable-find "zenity")
     (error "zenity not found"))
   (call-process "zenity" nil 0 nil "--info" "--title=Sauron"
     (concat "--text=" msg)))
-
 
 (provide 'sauron)
