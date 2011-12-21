@@ -106,7 +106,7 @@ The following events are erc-track
 (defun sr-erc-msg-clean (msg)
   "Clean IRC escaped stuff from messages."
   (when msg ;; remove the IRC meta crap
-    (replace-regexp-in-string ".*\\(\\|\\)" msg "")))
+    (replace-regexp-in-string ".*[]" "" msg)))
 
 (defun sr-erc-PRIVMSG-hook-func (proc parsed)
   "Hook function, to be called for erc-matched-hook."
@@ -117,7 +117,6 @@ The following events are erc-track
 	    (msg (sr-erc-msg-clean (erc-response.contents parsed)))
 	    (prio
 	      (cond
-		((numberp (string-match "" msg)) 1)    ;; ignore IRC meta messages
 		((string= sender "root")           2)    ;; bitlbee stuff; low-prio
 		((string= me target)               3)    ;; private msg for me => prio 4
 		((string-match me msg)             3)    ;; I'm mentioned => prio 3
