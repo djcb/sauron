@@ -53,6 +53,7 @@
     (setq appt-disp-window-function
       (function sr-org-old-appt-func))))
 
+
 (defun sr-org-handler-func (minutes-to-app new-time msg)
   "Handle appointment reminders. FIXME: apparently these params
 could be lists, too."

@@ -144,12 +144,14 @@
     attend in 5 minutes, simply adding a line in the Sauron-buffer may not be
     enough.
 
-    Instead, you can define a hook function for this. To make this easy, a few
+    Instead, you can define a hook function for this. 
+
+    For doing very sound effects, pop-ups etc., a few
     convenience functions are provided:
-    - ~sauron-sox~ (play a sound using 'sox')
-    - ~sauron-aplay~ (play a sound using 'aplay')
-    - ~sauron-gnome-osd~ (show some letters on your screen)
-    - ~sauron-zenity~ (pop up a zenity window)
+    - ~sauron-fx-sox~ (play a sound using 'sox')
+    - ~sauron-fx-aplay~ (play a sound using 'aplay')
+    - ~sauron-fx-gnome-osd~ (show some letters on your screen)
+    - ~sauron-fx-zenity~ (pop up a zenity window)
     (see the doc-strings for the functions for the details about their
     parameters).
     
@@ -159,11 +161,11 @@
     :(add-hook 'sauron-event-added-functions
 :  (lambda (origin prio msg &optional props)
 :    (if (string-match "ping" msg)
-:      (sauron-sox "/usr/share/sounds/ping.wav")
-:      (sauron-sox "/usr/share/sounds/something-happened.wav"))
+:      (sauron-fx-sox "/usr/share/sounds/ping.wav")
+:      (sauron-fx-sox "/usr/share/sounds/something-happened.wav"))
 :    (when (>= prio 4)
-:	(sauron-sox "/usr/share/sounds/uhoh.wav")
-:	(sauron-gnome-osd msg 10))))
+:	(sauron-fx-sox "/usr/share/sounds/uhoh.wav")
+:	(sauron-fx-gnome-osd msg 10))))
     #+end_example
 
 ** the backend modules
@@ -260,6 +262,11 @@ I'm sure you can think of other useful applications.
 #+begin_src emacs-lisp
 :(require 'sauron)
 :
+: ;; note, you add (setq sauron-debug t) to get errors which can debug if 
+: ;; there's something wrong; normally, we catch such errors, since e.g an error
+: ;; in one of the hooks may cause ERC to fail (i.e., the message won't come 
+: ;; trough).
+:
 :(setq
 :  sauron-max-line-length 120 
 :  
@@ -275,14 +282,13 @@ I'm sure you can think of other useful applications.
 :(add-hook 'sauron-event-added-functions
 :  (lambda (origin prio msg &optional props)
 :    (if (string-match "ping" msg)
-:      ;;(sauron-sox "/usr/share/sounds/ping.wav")
-:      (sauron-sox "/usr/share/sounds/message-new-instant.oga.wav"))
+:      (sauron-fx-sox "/usr/share/sounds/message-new-instant.oga.wav"))
 :    (cond
-:      ((= prio 3) (sauron-sox "/usr/share/sounds/message-new-instant.oga.wav"))
-:      ((= prio 4) (sauron-sox "/usr/share/sounds/uhoh.au"))
+:      ((= prio 3) (sauron-fx-sox "/usr/share/sounds/pling.wav"))
+:      ((= prio 4) (sauron-fx-sox "/usr/share/sounds/plong.wav"))
 :      ((= prio 5)
-:	(sauron-sox "/usr/share/sounds/phone-incoming-call.oga.wav")
-:	(sauron-gnome-osd(format "%S: %s" origin msg) 5)))))
+:	(sauron-fx-sox "/usr/share/sounds/alarm.wav")
+:	(sauron-fx-gnome-osd(format "%S: %s" origin msg) 5)))))
 :
 :;; events to ignore 
 :(add-hook 'sauron-event-block-functions
