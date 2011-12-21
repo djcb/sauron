@@ -70,7 +70,7 @@ could be lists, too."
       'org-agenda-list
       `(:minutes-left ,left :msg ,msg))
     ;; call the old function as well, if defined
-    (when sauron-org-old-appt-func
-      (funcall 'sauron-org-old-appt-func minutes-to-app new-time msg))))
+    (when sr-org-old-appt-func
+      (funcall sr-org-old-appt-func minutes-to-app new-time msg))))
   
 (provide 'sauron-org)  
