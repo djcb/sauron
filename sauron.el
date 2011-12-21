@@ -10,12 +10,12 @@
 
 ;; This file is not part of GNU Emacs.
 ;;
-;; GNU Emacs is free software: you can redistribute it and/or modify
+;; Sauron is free software: you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
 ;; the Free Software Foundation, either version 3 of the License, or
 ;; (at your option) any later version.
 
-;; GNU Emacs is distributed in the hope that it will be useful,
+;; Sauron is distributed in the hope that it will be useful,
 ;; but WITHOUT ANY WARRANTY; without even the implied warranty of
 ;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ;; GNU General Public License for more details.
@@ -179,13 +179,13 @@ PROPS is a backend-specific plist.")
   (sauron-add-event 'sauron 1 "sauron has stopped")
   (sr-hide))
 
-(defun sr-pattern-matches (msg ptrnlist cmpfunc)
-  "Return t if any regexp in the list PTRNLIST matches MSG,
-otherwise return nil. CMP is the comparison function."
+(defun sr-pattern-matches (str ptrnlist cmpfunc)
+  "Return t if any regexp in the list PTRNLIST matches STR,
+otherwise return nil. CMPFUNC is the comparison function."
   (cond
-    ((null ptrnlist) nil)                ;; no match
-    ((funcall cmpfunc (car ptrnlist) msg) t) ;; match
-    (t (sr-pattern-matches msg (cdr ptrnlist) cmpfunc)))) ;; continue searching
+    ((or (null ptrnlist) (null str)) nil) ;; no match
+    ((funcall cmpfunc (car ptrnlist) str) t) ;; match
+    (t (sr-pattern-matches str (cdr ptrnlist) cmpfunc)))) ;; continue searching
 
 
 (defun sr-fresh-nick-event (nick)
@@ -197,35 +197,29 @@ timestamp."
   (let* ((now-lsb (nth 1 (current-time))) ;; the stupid emacs time
 	 (tstamp (gethash nick sr-nick-event-hash))
 	  (diff (when tstamp (- now-lsb tstamp))))
-    ;; (if diff
-    ;;   (message "%S last seen %S secs ago" nick diff)
-    ;;   (message "%S never seen before" nick))
     (when (or (not diff) (> diff sauron-nick-insensitivity))
-  ;;    (message "%S is fresh; last seen %S sec(s) ago" nick diff)
       (puthash nick now-lsb sr-nick-event-hash))))
 
 
 (defun sr-calibrated-prio (msg props prio)
-  "Re-calibrate the PRIO for MSG with PROPS, based on:
-1) if MSG matches any of `sauron-watch-patterns', raise the priority.
-2) if the nick (sender) of MSG matches `sauron-watch-nick', raise the priority.
-3) if we raised the priority of nick in the last `sauron-nick-insensitity' seconds,
-   lower the priority.
+  "Re-calibrate the PRIO for MSG with PROPS:
+1) if we already saw something from this nick in the last
+`sauron-nick-insensitity' seconds, don't change the priority.
+2) otherwise:
+   if msg matches `sauron-watch-patterns', prio = prio + 1
+   if nick matches `sauron-watch-nicks', prio = prio + 1
+3) if prio > 5, prio = 5
 Returns the new priority."
   (let ((prio prio) (oldprio prio)
 	 (nick (plist-get props :sender)))
-    ;; check for watch patterns
-    (when (sr-pattern-matches msg sauron-watch-patterns 'string-match)
-      (incf prio))
-    ;; check for watch nicks
-    (when (and nick (sr-pattern-matches msg sauron-watch-nicks 'string=))
-      (incf prio))
-    ;; did we already raise an event for nick recently?
-    (when (and nick (not (sr-fresh-nick-event nick)))
-      ;;(message "%S prio: %d->%d" nick oldprio prio)
-      (decf prio))
-;;    (message "%S prio: %d->%d" nick oldprio prio)
-    prio))
+    (when (sr-fresh-nick-event nick) ;; 
+      (when (sr-pattern-matches msg sauron-watch-patterns 'string-match)
+	(incf prio))
+      (when (sr-pattern-matches nick sauron-watch-nicks 'string=)
+	(incf prio))
+      (when (> prio 5)
+	(setq prio 5)) 
+      prio)))
 
 
 ;; the main work horse functions
