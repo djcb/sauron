@@ -154,6 +154,7 @@ PROPS is a backend-specific plist.")
     buffer-read-only t
     overwrite-mode 'overwrite-mode-binary))
 
+;;;###autoload
 (defun sauron-start ()
   "Start sauron."
   (interactive)
@@ -207,7 +208,7 @@ timestamp."
 (defun sr-calibrated-prio (msg props prio)
   "Re-calibrate the PRIO for MSG with PROPS:
 1) if we already saw something from this nick in the last
-`sauron-nick-insensitity' seconds, don't change the priority.
+`sauron-nick-insensitity' seconds, set priority to 2.
 2) otherwise:
    if msg matches `sauron-watch-patterns', prio = prio + 1
    if nick matches `sauron-watch-nicks', prio = prio + 1
@@ -215,13 +216,15 @@ timestamp."
 Returns the new priority."
   (let ((prio prio)
 	 (nick (plist-get props :sender)))
-    (when (sr-fresh-nick-event nick) ;;
-      (when (sr-pattern-matches msg sauron-watch-patterns 'string-match)
-	(incf prio))
-      (when (sr-pattern-matches nick sauron-watch-nicks 'string=)
-	(incf prio))
-      (when (> prio 5)
-	(setq prio 5)))
+    (if (not (sr-fresh-nick-event nick)) ;;
+      (setq prio 2) ;; set prio to 2 for nicks we got events for recently
+      (progn
+	(when (sr-pattern-matches msg sauron-watch-patterns 'string-match)
+	  (incf prio))
+	(when (sr-pattern-matches nick sauron-watch-nicks 'string=)
+	  (incf prio))
+	(when (> prio 5)
+	  (setq prio 5))))
       prio))
 
 
