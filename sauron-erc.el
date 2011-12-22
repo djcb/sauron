@@ -130,12 +130,12 @@ The following events are erc-track
 	  (propertize " says " 'face 'sauron-highlight1-face)
 	  msg)
 	;; FIXME: assumes we open separate window
-	(lexical-let* ((bufname (if (string= target me) sender target))
-			(buf (and bufname) (get-buffer bufname)))
+	(lexical-let* ((bufname (if (string= target me) sender target)))
 	  (lambda()
-	    (if (buffer-live-p buf)
-	      (sauron-switch-to-buffer buf)
-	      (message "Buffer %S not available" bufname))))
+	    (let ((buf (get-buffer bufname)))
+	      (if (buffer-live-p buf)
+		(sauron-switch-to-buffer buf)
+		(message "Buffer %S not available" bufname)))))
 	`( :event   privmsg
 	   :sender ,sender
 	   :me     ,me
