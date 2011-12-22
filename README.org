@@ -158,7 +158,7 @@
     Now, our hook function could look something like:
 
     #+begin_example
-    :(add-hook 'sauron-event-added-functions
+:(add-hook 'sauron-event-added-functions
 :  (lambda (origin prio msg &optional props)
 :    (if (string-match "ping" msg)
 :      (sauron-fx-sox "/usr/share/sounds/ping.wav")
@@ -257,6 +257,29 @@ I'm sure you can think of other useful applications.
    something happens. This is done using =sauron-add-event= (see it's
    documentation).
 
+** Using =sauron= from your other modules
+   
+   If you want to create simple sauron-events from other elisp code, writing a
+   backend modules might be unnecessary; you can simply call the
+   =sauron-add-event= function directly. See its docstring for the details. Example:
+
+#+begin_src emacs-lisp
+(sauron-add-event 
+   'kitchen           ;; origin 
+   3                  ;; priority 
+   "Coffee is ready!" 
+   '(lambda ()        ;; function called when activated
+      (message "Coffee's ready, get it while it's hot!"))
+   '(:temperature 80)) ;; arbitrary props passed to 
+                       ;; hook functions
+#+end_src
+
+   A typical pattern may also be to switch to the buffer of origin when the
+   event is activated. The =sauron-switch-to-buffer= function may be useful
+   there, as it tries to ensure that the buffer is shown in the /other/ frame
+   (not the one with Sauron).
+
+
 ** sample configuration
 
 #+begin_src emacs-lisp
@@ -272,7 +295,7 @@ I'm sure you can think of other useful applications.
 :  
 :  ;; you probably want to add your own nickname to the these patterns
 :  sauron-watch-patterns
-:  '("emacs-fu" "emacsfu" "wombat" "capybara" "neanderthal" "\\bmu\\b")
+:  '("emacs-fu" "emacsfu" "wombat" "capybara" "yak" "gnu" "\\bmu\\b")
 :
 :  ;; you probably want to add you own nick here as well
 :  sauron-watch-nicks
@@ -282,7 +305,7 @@ I'm sure you can think of other useful applications.
 :(add-hook 'sauron-event-added-functions
 :  (lambda (origin prio msg &optional props)
 :    (if (string-match "ping" msg)
-:      (sauron-fx-sox "/usr/share/sounds/message-new-instant.oga.wav"))
+:      (sauron-fx-sox "/usr/share/sounds/ping.wav"))
 :    (cond
 :      ((= prio 3) (sauron-fx-sox "/usr/share/sounds/pling.wav"))
 :      ((= prio 4) (sauron-fx-sox "/usr/share/sounds/plong.wav"))
