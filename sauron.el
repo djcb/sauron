@@ -262,7 +262,7 @@ PROPS an origin-specific property list that will be passed to the hook funcs."
 	func))
     (unless (or (null props) (listp props))
       (error "sauron-add-event: PROPS must be nil or a plist, not %S" props))
-    
+
     ;; recalculate the prio, based on watchwords, nicks involved, and recent
     ;; history.
     ;;  (message "old prio: %d" prio)
@@ -295,8 +295,8 @@ PROPS an origin-specific property list that will be passed to the hook funcs."
 	  (insert line))
 	(run-hook-with-args
 	  'sauron-event-added-functions origin prio msg props)))))
-  
-  
+
+
 (defun sauron-activate-event ()
   "Activate the callback for the current sauron line, and remove
 any special faces from the line."
@@ -448,5 +448,20 @@ sauron buffer."
     (error "zenity not found"))
   (call-process "zenity" nil 0 nil "--info" "--title=Sauron"
     (concat "--text=" msg)))
+
+(defun sauron-fx-notify (title msg secs)
+  "Send a notification with TITLE and MSG to the notification
+daemon of D-bus, and show the message for SECS seconds. Return the
+id for the notification."
+  (let ((note-id (random 65535)))
+    (dbus-call-method
+      :session "org.freedesktop.Notifications"
+      "/org/freedesktop/Notifications"
+      "org.freedesktop.Notifications" "Notify"
+      "Sauron"
+      note-id
+      "emacs" title msg
+      '(:array) '(:array :signature "{sv}") ':int32 secs)
+    note-id))
 
 (provide 'sauron)

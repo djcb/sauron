@@ -22,7 +22,7 @@
    concentrating on something else. So, I want something tweakable to provide me
    with the right balance between obnoxiousness and ignorability. Thus, sauron
    was born.
-   
+
    There's an increasing number of hooks and tunables in sauron, which allows
    you to fine-tune the behavior. However, I strive for it to be useful with
    minimal configuration.
@@ -37,7 +37,7 @@
 :   (add-to-list 'load-path "<path-to-sauron-dir>")
 :   (require 'sauron)
    #end_example
-   
+
    Now, you can start sauron with... =M-x sauron-start=, and stop it with =M-x
    sauron-stop=.
 
@@ -47,7 +47,7 @@
    the event, which will then take some backend-specific action.
 
    For example, for the ERC-backend, it will transfer you to the buffer
-   (IRC-channel) where said event happened. 
+   (IRC-channel) where said event happened.
 
    You can clear all events with =M-x sauron-clear= (default keybinding: =c=).
 
@@ -55,10 +55,10 @@
    modules; if you don't have ERC, org-mode or d-bus support, these will simply
    be ignored. If so desired, you can customize =sauron-modules=. See below for
    some specifics about the backends.
-   
+
 
 ** customization
-   
+
    I've tried hard to come up with reasonable defaults, such that users can get
    started with sauron without reading too much documentation or having to write
    emacs-lisp etc.; still, I've also tried to make sauron very configurable -
@@ -78,7 +78,7 @@
     them. And that is probably a good idea.
 
 *** watching patterns -- =sauron-watch-patterns=
-    
+
     You can specify a list of patterns (regular expressions) which sauron should
     check. An event matching any of the patterns in the list will have its
     priority raised by 1 point. If that one point raises it to
@@ -114,7 +114,7 @@
     which defaults to 60 seconds.
 
 *** blocking events from showing up -- =sauron-event-block-functions=
-    
+
     We can customize things even more precisely using the
     =sauron-event-block-functions= hook function. Any event with a priority >=
     =sauron-min-priority= will be passed to the hook function(s); if any of
@@ -125,7 +125,7 @@
     :(add-hook 'sauron-event-block-functions
 :  (lambda (origin prio msg &optional props)
 :    (or
-:      (string-match "foo" msg) ;; ignore events that match 'foo' 
+:      (string-match "foo" msg) ;; ignore events that match 'foo'
 :      ;; other matchers
 :     )))
     #+end_example
@@ -137,14 +137,14 @@
 *** doing stuff based on events -- =sauron-event-added-functions=
 
     After events have been added, another hook is called:
-    =sauron-event-added-functions=.  
+    =sauron-event-added-functions=.
 
     This is place to add sound effects, notifications and so on. After all, if
     you get an event for e.g. the org-mode backend that you have a meeting to
     attend in 5 minutes, simply adding a line in the Sauron-buffer may not be
     enough.
 
-    Instead, you can define a hook function for this. 
+    Instead, you can define a hook function for this.
 
     For doing very sound effects, pop-ups etc., a few
     convenience functions are provided:
@@ -152,9 +152,10 @@
     - ~sauron-fx-aplay~ (play a sound using 'aplay')
     - ~sauron-fx-gnome-osd~ (show some letters on your screen)
     - ~sauron-fx-zenity~ (pop up a zenity window)
+    - ~sauron-fx-notify~ (trigger a notification using the D-Bus notification daemon)
     (see the doc-strings for the functions for the details about their
     parameters).
-    
+
     Now, our hook function could look something like:
 
     #+begin_example
@@ -240,9 +241,9 @@ Call-script-when-torrent-is-completed), add something like:
 
 I'm sure you can think of other useful applications.
 
-    
+
 ** adding new modules
-   
+
    It may be interesting to track other modules as well; this shouldn't be too
    hard. Suppose we have a module 'foo':
 
@@ -258,19 +259,19 @@ I'm sure you can think of other useful applications.
    documentation).
 
 ** Using =sauron= from your other modules
-   
+
    If you want to create simple sauron-events from other elisp code, writing a
    backend modules might be unnecessary; you can simply call the
    =sauron-add-event= function directly. See its docstring for the details. Example:
 
 #+begin_src emacs-lisp
-(sauron-add-event 
-   'kitchen           ;; origin 
-   3                  ;; priority 
-   "Coffee is ready!" 
+(sauron-add-event
+   'kitchen           ;; origin
+   3                  ;; priority
+   "Coffee is ready!"
    '(lambda ()        ;; function called when activated
       (message "Coffee's ready, get it while it's hot!"))
-   '(:temperature 80)) ;; arbitrary props passed to 
+   '(:temperature 80)) ;; arbitrary props passed to
                        ;; hook functions
 #+end_src
 
@@ -285,14 +286,14 @@ I'm sure you can think of other useful applications.
 #+begin_src emacs-lisp
 :(require 'sauron)
 :
-: ;; note, you add (setq sauron-debug t) to get errors which can debug if 
+: ;; note, you add (setq sauron-debug t) to get errors which can debug if
 : ;; there's something wrong; normally, we catch such errors, since e.g an error
-: ;; in one of the hooks may cause ERC to fail (i.e., the message won't come 
+: ;; in one of the hooks may cause ERC to fail (i.e., the message won't come
 : ;; trough).
 :
 :(setq
-:  sauron-max-line-length 120 
-:  
+:  sauron-max-line-length 120
+:
 :  ;; you probably want to add your own nickname to the these patterns
 :  sauron-watch-patterns
 :  '("emacs-fu" "emacsfu" "wombat" "capybara" "yak" "gnu" "\\bmu\\b")
@@ -313,10 +314,9 @@ I'm sure you can think of other useful applications.
 :	(sauron-fx-sox "/usr/share/sounds/alarm.wav")
 :	(sauron-fx-gnome-osd(format "%S: %s" origin msg) 5)))))
 :
-:;; events to ignore 
+:;; events to ignore
 :(add-hook 'sauron-event-block-functions
 :  (lambda (origin prio msg &optional props)
 :    (or
 :      (string-match "^*** Users" msg)))) ;; don't notify on IRC spam
 #+end_src
-
