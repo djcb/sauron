@@ -230,14 +230,13 @@ Returns the new priority."
 
 
 (defmacro sr-ignore-errors-maybe (&rest body)
-  "If `sauron-debug' is non-nil, execute BODY; otherwise behave
-like `ignore-errors'."
+  "Execute BODY; if sauron-debug is nil, do so in a
+`ignore-errors'-block, otherwise run with without such a block.
+For debugging purposes."
   (if sauron-debug
-    (progn ,@body)
+    `(progn ,@body)
     (declare (debug t) (indent 0))
     `(condition-case nil (progn ,@body) (error nil))))
-
-
 
 ;; the main work horse functions
 (defun sauron-add-event (origin prio msg &optional func props)
@@ -248,51 +247,52 @@ MSG a string describing the event.
 Then, optionally:
 FUNC if non-nil, a function called when user activates the event in the log.
 PROPS an origin-specific property list that will be passed to the hook funcs."
-  (sr-ignore-errors-maybe ;; ignore errors unless we're debugging
-    ;; since this is called by possibly external modules, scrutinize the params
-    ;; a bit more, to make debugging easier
-    (unless (symbolp origin)
-      (error "sauron-add-event: ORIGIN must be a symbol, not %S" origin))
-    (unless (and (integerp prio) (>= prio 0) (<= prio 5))
-      (error "sauron-add-event: PRIO  ∈ [0..5], not %S" prio))
-    (unless (stringp msg)
-      (error "sauron-add-event: MSG must be a string, not %S" msg))
-    (unless (or (null func) (functionp func))
-      (error "sauron-add-event: FUNC must be nil or a function, not %S"
-	func))
-    (unless (or (null props) (listp props))
-      (error "sauron-add-event: PROPS must be nil or a plist, not %S" props))
-
-    ;; recalculate the prio, based on watchwords, nicks involved, and recent
-    ;; history.
-    ;;  (message "old prio: %d" prio)
-    (setq prio (sr-calibrated-prio msg props prio))
-    ;;  (message "new prio:%S msg:%S" prio msg)
-    ;; we allow this event only if it's prio >= `sauron-min-priority' and
-    ;; running the `sauron-event-block-functions' hook evaluates to nil.
-    (when (and (>= prio sauron-min-priority)
-	    (null (run-hook-with-args-until-success
-		    'sauron-event-block-function origin prio msg props)))
-      (let* ((line (format-spec sauron-event-format
-		     (format-spec-make
-		       ?t (propertize (format-time-string sauron-timestamp-format
-					(current-time)) 'face 'sauron-timestamp-face)
-		       ?p (format "%d" prio)
-		       ?o (propertize (symbol-name origin) 'face 'sauron-origin-face)
-		       ?m msg)))
-	      ;; add the callback as a text property, remove any embedded newlines,
-	      ;; truncate if necessary append a newline
-	      (line (concat
-		      (truncate-string-to-width
-			(propertize (replace-regexp-in-string "\n" " " line)
-			  'callback func)
-			sauron-max-line-length 0 nil t)
+  ;; since this is called by possibly external modules, scrutinize the params
+  ;; a bit more, to make debugging easier
+  (unless (symbolp origin)
+    (error "sauron-add-event: ORIGIN must be a symbol, not %S" origin))
+  (unless (and (integerp prio) (>= prio 0) (<= prio 5))
+    (error "sauron-add-event: PRIO  ∈ [0..5], not %S" prio))
+  (unless (stringp msg)
+    (error "sauron-add-event: MSG must be a string, not %S" msg))
+  (unless (or (null func) (functionp func))
+    (error "sauron-add-event: FUNC must be nil or a function, not %S"
+      func))
+  (unless (or (null props) (listp props))
+    (error "sauron-add-event: PROPS must be nil or a plist, not %S" props))
+  
+  ;; recalculate the prio, based on watchwords, nicks involved, and recent
+  ;; history.
+  ;;  (message "old prio: %d" prio)
+  (setq prio (sr-calibrated-prio msg props prio))
+  ;;  (message "new prio:%S msg:%S" prio msg)
+  ;; we allow this event only if it's prio >= `sauron-min-priority' and
+  ;; running the `sauron-event-block-functions' hook evaluates to nil.
+  (when (and (>= prio sauron-min-priority)
+	  (null (sr-ignore-errors-maybe ;; ignore errors unless we're debugging
+		  (run-hook-with-args-until-success
+		    'sauron-event-block-function origin prio msg props))))
+    (let* ((line (format-spec sauron-event-format
+		   (format-spec-make
+		     ?t (propertize (format-time-string sauron-timestamp-format
+				      (current-time)) 'face 'sauron-timestamp-face)
+		     ?p (format "%d" prio)
+		     ?o (propertize (symbol-name origin) 'face 'sauron-origin-face)
+		     ?m msg)))
+	    ;; add the callback as a text property, remove any embedded newlines,
+	    ;; truncate if necessary append a newline
+	    (line (concat
+		    (truncate-string-to-width
+		      (propertize (replace-regexp-in-string "\n" " " line)
+			'callback func)
+		      sauron-max-line-length 0 nil t)
 		      "\n"))
-	      (inhibit-read-only t))
-	(sr-create-buffer-maybe) ;; create buffer if it did not exist yet
-	(with-current-buffer sr-buffer
-	  (goto-char (point-max))
-	  (insert line))
+	    (inhibit-read-only t))
+      (sr-create-buffer-maybe) ;; create buffer if it did not exist yet
+      (with-current-buffer sr-buffer
+	(goto-char (point-max))
+	(insert line))
+      (sr-ignore-errors-maybe ;; ignore errors unless we're debugging
 	(run-hook-with-args
 	  'sauron-event-added-functions origin prio msg props)))))
 
