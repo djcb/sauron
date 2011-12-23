@@ -64,31 +64,30 @@ The following events are erc-track
 
 (defun sr-erc-hook-func (proc parsed event)
   "Hook function, to be called for erc-matched-hook."
-  (sr-ignore-errors-maybe ;; ignore errors unless sauron-debug is non-nil
-    (let* ( (me     (erc-current-nick))
-	    (sender (car (erc-parse-user (erc-response.sender parsed))))
-	    (target (car (erc-response.command-args parsed)))
-	    (msg (erc-response.contents parsed)))
-      (sauron-add-event
-	'erc
-	2
-	(concat (propertize sender 'face 'sauron-highlight1-face) " has "
-	  (case event
-	    ('quit (concat "quit (" msg ")"))
-	    ('part (concat "left "
-		     (propertize target 'face 'sauron-highlight2-face)
-		     " (" msg ")"))
-	    ('join (concat "joined "
-		     (propertize target 'face 'sauron-highlight2-face)))))
-	;; FIXME: assumes we open separate window
-	(when (eq event 'join)
-	  (lexical-let ((target target))
-	    (lambda()  (sauron-switch-to-buffer target))))
-	`( :event  ,event
-	   :sender ,sender
-	   :me     ,me
-	   :target ,target
-	   :msg    ,msg)))))
+  (let* ( (me     (erc-current-nick))
+	  (sender (car (erc-parse-user (erc-response.sender parsed))))
+	  (target (car (erc-response.command-args parsed)))
+	  (msg (erc-response.contents parsed)))
+    (sauron-add-event
+      'erc
+      2
+      (concat (propertize sender 'face 'sauron-highlight1-face) " has "
+	(case event
+	  ('quit (concat "quit (" msg ")"))
+	  ('part (concat "left "
+		   (propertize target 'face 'sauron-highlight2-face)
+		   " (" msg ")"))
+	  ('join (concat "joined "
+		   (propertize target 'face 'sauron-highlight2-face)))))
+      ;; FIXME: assumes we open separate window
+      (when (eq event 'join)
+	(lexical-let ((target target))
+	  (lambda()  (sauron-switch-to-buffer target))))
+      `( :event  ,event
+	 :sender ,sender
+	 :me     ,me
+	 :target ,target
+	 :msg    ,msg))))
 
 
 (defun sr-erc-JOIN-hook-func (proc parsed)
@@ -110,17 +109,16 @@ The following events are erc-track
 
 (defun sr-erc-PRIVMSG-hook-func (proc parsed)
   "Hook function, to be called for erc-matched-hook."
-  (sr-ignore-errors-maybe ;; ignore errors unless sauron-debug is non-nil
     (let* ( (me     (erc-current-nick))
 	    (sender (car (erc-parse-user (erc-response.sender parsed))))
 	    (target (car (erc-response.command-args parsed)))
 	    (msg (sr-erc-msg-clean (erc-response.contents parsed)))
 	    (prio
 	      (cond
-		((string= sender "root")           2)    ;; bitlbee stuff; low-prio
-		((string= me target)               3)    ;; private msg for me => prio 4
-		((string-match me msg)             3)    ;; I'm mentioned => prio 3
-		(t                                 2)))) ;; default
+		((string= sender "root") 2)    ;; bitlbee stuff; low-prio
+		((string= me target)	 3)    ;; private msg for me => prio 4
+		((string-match me msg)	 3)    ;; I'm mentioned => prio 3
+		(t			 2)))) ;; default
       (sauron-add-event
 	'erc
 	prio
@@ -140,6 +138,6 @@ The following events are erc-track
 	   :sender ,sender
 	   :me     ,me
 	   :target ,target
-	   :msg    ,msg)))))
+	   :msg    ,msg))))
 
 (provide 'sauron-erc)
