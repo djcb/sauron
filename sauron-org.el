@@ -1,12 +1,6 @@
-;;; sauron-org -- enhanced tracking of the world inside and outside your emacs
-;;; buffers
+;;; sauron-org.el --- an org-mode (appt) tracking module, part of sauron
 ;;
 ;; Copyright (C) 2011 Dirk-Jan C. Binnema
-
-;; Author: Dirk-Jan C. Binnema <djcb@djcbsoftware.nl>
-;; Maintainer: Dirk-Jan C. Binnema <djcb@djcbsoftware.nl>
-;; Keywords: 
-;; Version: 0.0
 
 ;; This file is not part of GNU Emacs.
 ;;
@@ -24,6 +18,8 @@
 ;; along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
 
 ;;; Commentary:
+;;  For documentation, please see:
+;;  https://github.com/djcb/sauron/blob/master/README.org
 
 ;;; Code:
 (require 'appt nil 'noerror)
@@ -74,3 +70,5 @@ could be lists, too."
       (funcall sr-org-old-appt-func minutes-to-app new-time msg))))
   
 (provide 'sauron-org)  
+
+;;; sauron-org ends here

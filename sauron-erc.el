@@ -1,11 +1,6 @@
-;;; sauron-erc -- tracking your ERC irc-channels
+;;; sauron-erc.el --- an ERC tracking module, part of sauron
 ;;
 ;; Copyright (C) 2011 Dirk-Jan C. Binnema
-
-;; Author: Dirk-Jan C. Binnema <djcb@djcbsoftware.nl>
-;; Maintainer: Dirk-Jan C. Binnema <djcb@djcbsoftware.nl>
-;; Keywords:
-;; Version: 0.0
 
 ;; This file is not part of GNU Emacs.
 ;;
@@ -23,6 +18,8 @@
 ;; along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
 
 ;;; Commentary:
+;;  For documentation, please see:
+;;  https://github.com/djcb/sauron/blob/master/README.org
 
 ;;; Code:
 (require 'erc nil 'noerror)
@@ -141,3 +138,5 @@ The following events are erc-track
 	   :msg    ,msg))))
 
 (provide 'sauron-erc)
+
+;;; sauron-erc ends here

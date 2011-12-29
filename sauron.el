@@ -1,12 +1,12 @@
-;;; sauron -- enhanced tracking of the world inside and outside your emacs
-;;; buffers
+;;; sauron.el --- a frame tracking events inside and outside your emacs buffers
 ;;
 ;; Copyright (C) 2011 Dirk-Jan C. Binnema
 
 ;; Author: Dirk-Jan C. Binnema <djcb@djcbsoftware.nl>
 ;; Maintainer: Dirk-Jan C. Binnema <djcb@djcbsoftware.nl>
-;; Keywords:
+;; Created: 06 Dec 2011
 ;; Version: 0.0
+;; Keywords:comm,frames
 
 ;; This file is not part of GNU Emacs.
 ;;
@@ -24,6 +24,9 @@
 ;; along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
 
 ;;; Commentary:
+;;  For documentation, please see:
+;;  https://github.com/djcb/sauron/blob/master/README.org
+
 
 ;;; Code:
 (eval-when-compile (require 'cl))
@@ -465,3 +468,5 @@ id for the notification."
     note-id))
 
 (provide 'sauron)
+
+;;; sauron.el ends here

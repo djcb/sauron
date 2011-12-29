@@ -1,12 +1,6 @@
-;;; sauron -- enhanced tracking of the world inside and outside your emacs
-;;; buffers. 
+;;; sauron-dbus.el --- a dbus tracking module, part of sauron
 ;;
 ;; Copyright (C) 2011 Dirk-Jan C. Binnema
-
-;; Author: Dirk-Jan C. Binnema <djcb@djcbsoftware.nl>
-;; Maintainer: Dirk-Jan C. Binnema <djcb@djcbsoftware.nl>
-;; Keywords: 
-;; Version: 0.0
 
 ;; This file is not part of GNU Emacs.
 ;;
@@ -24,32 +18,10 @@
 ;; along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
 
 ;;; Commentary:
-
-;; listen for dbus notifications.
-;; to call from shell, some convenience functions (for zsh, bash, *not* sh)
-;; # send URL to sauron...
-
-;; function sauron-url () {
-;;     # --print-reply
-;;     dbus-send --session          	   \
-;;     --dest="org.gnu.Emacs"		   \
-;;      "/org/gnu/Emacs/Sauron"            \
-;;     "org.gnu.Emacs.Sauron.AddUrlEvent"  \
-;;     string:shell uint32:3 string:url string:"$1"
-;; }
-
-;; # send message to sauron...
-;; function sauron-msg () {
-;;     # --print-reply
-;;     dbus-send --session          	       \
-;;     --dest="org.gnu.Emacs"		       \
-;;      "/org/gnu/Emacs/Sauron"                \
-;;     "org.gnu.Emacs.Sauron.AddMsgEvent"      \
-;;     string:shell uint32:3 string:$1
-;; }
+;;  For documentation, please see:
+;;  https://github.com/djcb/sauron/blob/master/README.org
 
 ;;; Code:
-
 (require 'dbus nil 'noerror)
 
 (defconst sr-dbus-service dbus-service-emacs
@@ -149,4 +121,5 @@
 
 (provide 'sauron-dbus)
 
+;;; sauron-dbus ends here
 
