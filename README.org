@@ -169,6 +169,17 @@
 :	(sauron-fx-gnome-osd msg 10))))
     #+end_example
 
+** connecting to alert.el
+
+   John Wiegley's [[https://github.com/jwiegley/alert][alert.el]] has a bit of overlap with sauron; however, I've added
+   some wrapper function to make it trivial to feed sauron events into
+   alert. Simply adding:
+#begin_src emacs-lisp
+     (add-hook 'sauron-event-added-functions 'sauron-alert-el-adapter)
+#end_src
+   in your setup should do the trick (of course. alert.el must be loaded).
+
+
 ** the backend modules
 
    Currently, three backend modules have been implemented - ERC, org-mode and

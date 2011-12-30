@@ -263,7 +263,7 @@ PROPS an origin-specific property list that will be passed to the hook funcs."
       func))
   (unless (or (null props) (listp props))
     (error "sauron-add-event: PROPS must be nil or a plist, not %S" props))
-  
+
   ;; recalculate the prio, based on watchwords, nicks involved, and recent
   ;; history.
   ;;  (message "old prio: %d" prio)
@@ -412,6 +412,22 @@ sauron buffer."
     (with-current-buffer sr-buffer
       (sauron-mode)))
   sr-buffer)
+
+
+
+
+;; adapters
+
+(defun sauron-alert-el-adapter (origin prio msg &optional props)
+  "A handler function to feed sauron events through John Wiegley's
+alert.el (https://github.com/jwiegley/alert). You can use it like:
+  (add-hook 'sauron-event-added-functions 'sauron-alert-el-adapter)
+Obviously, 'alert.el' must be loaded for this to work."
+  ;; sauron priorities [0..5] mapping alert severities
+  (let ((sev (nth prio '(trivial trivial low normal moderate high urgent)))
+	 (cat origin)   ;; origins map to alert categories
+	 (title (format "Alert from %S" origin)))
+    (alert msg :severity sev :title title :category cat)))
 
 
 
