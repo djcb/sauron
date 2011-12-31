@@ -5,7 +5,7 @@
 ;; Author: Dirk-Jan C. Binnema <djcb@djcbsoftware.nl>
 ;; Maintainer: Dirk-Jan C. Binnema <djcb@djcbsoftware.nl>
 ;; Created: 06 Dec 2011
-;; Version: 0.0
+;; Version: 0.1
 ;; Keywords:comm,frames
 
 ;; This file is not part of GNU Emacs.

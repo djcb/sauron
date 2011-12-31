@@ -33,7 +33,7 @@ sauron-$(VERSION).tar: $(ELPA_FILES)
 	tar -cvf sauron-$(VERSION).tar sauron-$(VERSION)
 	rm -rf sauron-$(VERSION)
 
-sauron-pkg.el: sauron-pkg.el.in
+sauron-pkg.el: sauron-pkg.el.in sauron.el
 	sed -e s/@VERSION@/$(VERSION)/ < $< > $@
 
 clean:
