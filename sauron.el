@@ -27,6 +27,8 @@
 ;;  For documentation, please see:
 ;;  https://github.com/djcb/sauron/blob/master/README.org
 
+;; note - 'public' functions/variables are prefixed with 'sauron-', while
+;; internal stuff starts with 'sr-'
 
 ;;; Code:
 (eval-when-compile (require 'cl))
@@ -66,13 +68,24 @@ coming from some nick after something has come in. This is to
 prevent large numbers of beeps, light effects when dealing with
 nick. Must be < 65536")
 
+(defvar sauron-column-alist
+  '( ( timestamp  .  20)
+     ( origin     .   7)
+     ( priority   .   4)
+     ( message    . nil))
+"An alist with elements (FIELD . WIDTH) which describes the columns to
+  show. The fields are truncated to fit in WIDTH characters, with
+  'nil' meaning 'no limit', so that one's should be reserverd for
+  the last field. Also, the width should be >= 3.")
 
-(defvar sauron-event-format "%t %o(%p) %m"
-  "Format of a sauron event line. The following format parameters are available:
-%t: the timestamp (see `sauron-timestamp-format' for its format)
-%p: priority of the event (an integer [1..5])
-%o: the origin of the event
-%m: the message for this event.")
+
+(defconst sr-column-name-alist
+  '( ( timestamp    . "Time"   )
+     ( origin       . "Orig"   )
+     ( priority     . "Prio"   )
+     ( message      . "Message"))
+  "Alist of the column names.")
+
 
 (defvar sauron-debug nil
   "Whether do show errors.")
@@ -117,24 +130,33 @@ PROPS is a backend-specific plist.")
   '((t :inherit font-lock-variable-name-face))
   "Face for a sauron event origin.")
 
+(defface sauron-priority-face
+  '((t :inherit font-lock-operator))
+  "Face for a sauron event priority.")
+
 ;; these highlight faces are for use in backends
 (defface sauron-highlight1-face
   '((t :inherit font-lock-pseudo-keyword-face))
-  "Face to highlight certain things (1).")
+  "Face to highlight certain things (1) - for use in backends.")
 
 (defface sauron-highlight2-face
   '((t :inherit font-lock-string-face))
-  "Face to highlight certain things (2).")
+  "Face to highlight certain things (2) - for use in backends.")
 
 (defface sauron-highlight3-face
   '((t :inherit font-lock-constant-face))
-  "Face to highlight certain things (3).")
+  "Face to highlight certain things (3) - for use in backends..")
+
+(defface sauron-header-face
+  '((t :inherit font-lock-function-name-face :bold t))
+  "Face for the header line.")
+
 
 ;;(setq sauron-mode-map nil)
 (defvar sauron-mode-map
   (let ((map (make-sparse-keymap)))
-    (define-key map "c"               'sauron-clear)
-    (define-key map (kbd "RET")       'sauron-activate-event)
+    (define-key map "c"                    'sauron-clear)
+    (define-key map (kbd "RET")            'sauron-activate-event)
     (define-key map (kbd "<down-mouse-1>") 'sauron-activate-event)
     map)
   "Keymap for the sauron buffer.")
@@ -144,6 +166,25 @@ PROPS is a backend-specific plist.")
 (defvar sr-nick-event-hash nil
   "*internal* hash of nicks and the last time we raised an 'event'
   for that at >= `sauron-min-priority'.")
+
+(defun sr-set-header-line ()
+  "Set the header line for the sauron buffer."
+  (setq header-line-format
+    (cons
+      (make-string (floor (fringe-columns 'left t)) ?\s)
+      (map 'list
+	(lambda (elm)
+	  (let ((field (cdr (assoc (car elm) sr-column-name-alist)))
+		 (width (cdr elm)))
+	    (concat
+	      (propertize
+		(if width
+		  (truncate-string-to-width field width 0 ?\s t)
+		  field)
+		'face 'sauron-header-face)
+	      " ")))
+	sauron-column-alist))))
+
 
 (defun sauron-mode ()
   "Major mode for the sauron."
@@ -155,8 +196,9 @@ PROPS is a backend-specific plist.")
     mode-name "Sauron"
     truncate-lines t
     buffer-read-only t
-    overwrite-mode 'overwrite-mode-binary))
-
+    overwrite-mode 'overwrite-mode-binary)
+  (sr-set-header-line))
+ 
 ;;;###autoload
 (defun sauron-start ()
   "Start sauron."
@@ -211,15 +253,14 @@ timestamp."
 (defun sr-calibrated-prio (msg props prio)
   "Re-calibrate the PRIO for MSG with PROPS:
 1) if we already saw something from this nick in the last
-`sauron-nick-insensitity' seconds, set priority to 2.
+`sauron-nick-insensitity' seconds, set priority to 2 (see `sr-fresh-nick-event')
 2) otherwise:
    if msg matches `sauron-watch-patterns', prio = prio + 1
    if nick matches `sauron-watch-nicks', prio = prio + 1
 3) if prio > 5, prio = 5
 Returns the new priority."
-  (let ((prio prio)
-	 (nick (plist-get props :sender)))
-    (if (not (sr-fresh-nick-event nick)) ;;
+  (let ((prio prio) (nick (plist-get props :sender)))
+    (if (and nick (not (sr-fresh-nick-event nick))) ;;
       (setq prio 2) ;; set prio to 2 for nicks we got events for recently
       (progn
 	(when (sr-pattern-matches msg sauron-watch-patterns 'string-match)
@@ -231,7 +272,6 @@ Returns the new priority."
       prio))
 
 
-
 (defmacro sr-ignore-errors-maybe (&rest body)
   "Execute BODY; if sauron-debug is nil, do so in a
 `ignore-errors'-block, otherwise run with without such a block.
@@ -240,6 +280,27 @@ For debugging purposes."
     `(progn ,@body)
     (declare (debug t) (indent 0))
     `(condition-case nil (progn ,@body) (error nil))))
+
+
+(defun sr-event-line (origin prio msg)
+  "Get a one-line string describing the event."
+  (mapconcat
+    (lambda (f-w)
+      (let* ((field (car f-w)) (width (cdr f-w))
+	      (str
+		(case field
+		  ('timestamp
+		    (propertize (format-time-string sauron-timestamp-format
+				  (current-time)) 'face 'sauron-timestamp-face))
+		  ('priority (propertize (format "%d" prio) 'face 'sauron-priority-face))
+		  ('origin   (propertize (symbol-name origin) 'face 'sauron-origin-face))
+		  ('message  msg)
+		  (otherwise (error "Unknown field %S" field)))))
+	(if width
+	  (truncate-string-to-width str width 0 ?\s t)
+	  str)))
+    sauron-column-alist " "))
+
 
 ;; the main work horse functions
 (defun sauron-add-event (origin prio msg &optional func props)
@@ -275,13 +336,7 @@ PROPS an origin-specific property list that will be passed to the hook funcs."
 	  (null (sr-ignore-errors-maybe ;; ignore errors unless we're debugging
 		  (run-hook-with-args-until-success
 		    'sauron-event-block-function origin prio msg props))))
-    (let* ((line (format-spec sauron-event-format
-		   (format-spec-make
-		     ?t (propertize (format-time-string sauron-timestamp-format
-				      (current-time)) 'face 'sauron-timestamp-face)
-		     ?p (format "%d" prio)
-		     ?o (propertize (symbol-name origin) 'face 'sauron-origin-face)
-		     ?m msg)))
+    (let* ((line (sr-event-line origin prio msg))
 	    ;; add the callback as a text property, remove any embedded newlines,
 	    ;; truncate if necessary append a newline
 	    (line (concat
@@ -333,6 +388,7 @@ any special faces from the line."
 	    ;; find a window for our buffer
 	    (win  (display-buffer buf t)))
       (select-frame-set-input-focus (window-frame win)))))
+
 
 (defun sr-show ()
   "Show the sauron buffer. Depending on
@@ -412,7 +468,6 @@ sauron buffer."
     (with-current-buffer sr-buffer
       (sauron-mode)))
   sr-buffer)
-
 
 
 
