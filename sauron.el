@@ -151,6 +151,9 @@ PROPS is a backend-specific plist.")
   '((t :inherit font-lock-function-name-face :bold t))
   "Face for the header line.")
 
+(defface sauron-event-handled-face
+  '((t :strike-through t))
+  "Face for a handled event.")
 
 ;;(setq sauron-mode-map nil)
 (defvar sauron-mode-map
@@ -372,7 +375,7 @@ any special faces from the line."
   	  (inhibit-read-only t))
     ;; remove the funky faces
     (put-text-property (line-beginning-position) (line-end-position)
-      'face 'default)
+      'face 'sauron-event-handled-face)
     (if callback
       (funcall callback)
       (message "No callback defined for this line."))))
