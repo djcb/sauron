@@ -301,6 +301,13 @@ For debugging purposes."
 	  str)))
     sauron-column-alist " "))
 
+(defun sr-scroll-to-bottom ()
+  "Scroll to the bottom of the sauron frame."
+  (let ((win (get-buffer-window sr-buffer)))
+    (when win
+      (save-selected-window
+	(select-window win)
+	(recenter -1)))))
 
 ;; the main work horse functions
 (defun sauron-add-event (origin prio msg &optional func props)
@@ -350,10 +357,10 @@ PROPS an origin-specific property list that will be passed to the hook funcs."
       (with-current-buffer sr-buffer
 	(goto-char (point-max))
 	(insert line))
+      (sr-scroll-to-bottom)
       (sr-ignore-errors-maybe ;; ignore errors unless we're debugging
 	(run-hook-with-args
 	  'sauron-event-added-functions origin prio msg props)))))
-
 
 (defun sauron-activate-event ()
   "Activate the callback for the current sauron line, and remove
@@ -411,7 +418,7 @@ one."
 		    (x-parse-geometry sauron-frame-geometry))))
 	    (modify-frame-parameters nil frame-params)))
 	(switch-to-buffer sr-buffer)))
-      (set-window-dedicated-p (selected-window) t)))
+    (set-window-dedicated-p (selected-window) t)))
 
 (defun sr-hide ()
   "Hide the sauron buffer and/of frame."
