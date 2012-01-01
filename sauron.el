@@ -38,10 +38,6 @@
   "List of sauron modules to use. Currently supported are:
 sauron-erc, sauron-org and sauron-dbus.")
 
-;; user settable variables
-(defvar sauron-separate-frame t
-  "Whether the sauron should use a separate frame.")
-
 (defvar sauron-frame-geometry "100x8+0-0"
   "Geometry (size, position) of the the sauron frame, in X geometry
   notation.")
@@ -391,8 +387,7 @@ any special faces from the line."
       (error "Buffer %s not found" buf))
     (let* ( ;; don't re-use the Sauron window
 	    (display-buffer-reuse-frames t)
-	    ;; if we're using a separate Sauron frame, don't split it
-	    (pop-up-windows (not sauron-separate-frame))
+	    (pop-up-windows nil)
 	   ;; don't create new frames
 	    (pop-up-frames nil)
 	    ;; find a window for our buffer
@@ -401,9 +396,7 @@ any special faces from the line."
 
 
 (defun sr-show ()
-  "Show the sauron buffer. Depending on
-`sauron-separate-frame', it will use the current frame or a new
-one."
+  "Show the sauron buffer in a separate frame."
   (interactive)
   (setq sr-buffer (sr-create-buffer-maybe))
   (let* ((win (get-buffer-window sr-buffer))
@@ -412,15 +405,13 @@ one."
       (progn
 	(select-window win)
 	(make-frame-visible frame))
-      (if sauron-separate-frame
-	(progn
+      (progn
 	  (switch-to-buffer-other-frame sr-buffer)
 	  (let ((frame-params
 		  (append
 		    '((tool-bar-lines . 0) (menu-bar-lines . 0))
 		    (x-parse-geometry sauron-frame-geometry))))
-	    (modify-frame-parameters nil frame-params)))
-	(switch-to-buffer sr-buffer)))
+	    (modify-frame-parameters nil frame-params))))
     (set-window-dedicated-p (selected-window) t)))
 
 (defun sr-hide ()
@@ -430,9 +421,8 @@ one."
     (error "No sauron buffer found"))
   (let* ((win (get-buffer-window sr-buffer t))
 	  (frame (and win (window-frame win))))
-    (if (and sauron-separate-frame (frame-live-p frame))
+    (if (frame-live-p frame)
       (make-frame-invisible frame))))
-;; TODO: handle the non-separate frame case
 
 
 (defun sauron-clear ()
