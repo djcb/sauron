@@ -22,8 +22,17 @@
 ;;  https://github.com/djcb/sauron/blob/master/README.org
 
 ;;; Code:
-(require 'dbus nil 'noerror)
+(unless (require 'dbus nil 'noerror)
+  (setq dbus-service-emacs "")) ;; keep errors out if dbus is not there
 
+(defvar sauron-dbus-cookie nil
+  "If non-nil, write the dbus-address for this session to a file
+~/.sauron-dbus, and will contain something like:
+\"unix:abstract=/tmp/dbus-BRQFYEwZz1,guid=...\"
+you can source this in e.g. a shell script:
+   DBUS_SESSION_BUS_ADDRESS=\"`cat ~/.sauron-dbus`\"
+and thus send messages to sauron, even when not in the session.")
+  
 (defconst sr-dbus-service dbus-service-emacs
   "*internal* the D-bus service name for sauron.")
 
@@ -31,46 +40,43 @@
   (concat dbus-path-emacs "/Sauron")
   "*internal* the D-bus interface for sauron.")
 
-(defconst sr-dbus-interface 
+(defconst sr-dbus-interface
   (concat sr-dbus-service ".Sauron")
   "*internal* the D-bus interface for sauron.")
 
 (defvar sr-dbus-running nil
   "*internal* Whether the dbus backend is running.")
 
-(defun sauron-dbus-start ()
-  "Start listening for sauron dbus messages."
-  (if (not (boundp 'dbus-path-emacs))
-    (message "sauron-dbus not available")
-    (unless sr-dbus-running
-      (dbus-register-method
-	:session               ;; use the session bus
-	sr-dbus-service        ;; ie. org.gnu.Emacs
-	sr-dbus-path           ;; ie. /org/gnu/Emacs/Sauron
-	sr-dbus-interface      ;; ie. org.gnu.Emacs.Sauron
-	"AddUrlEvent"          ;; method name
-	'sr-dbus-add-url-event ;; handler function
-	))
+
+(defun sr-register-methods ()
+  "Register our functions on BUS (either :session or :system)."
     (dbus-register-method
-      :session               ;; use the session bus
-      sr-dbus-service        ;; ie. org.gnu.Emacs
+      :session               ;; bus to use (:session or :system)
+      sr-dbus-service        ;; ie. org.gnu.Emacs or org.gnu.Emacs.<username>
+      sr-dbus-path           ;; ie. /org/gnu/Emacs/Sauron
+      sr-dbus-interface      ;; ie. org.gnu.Emacs.Sauron
+      "AddUrlEvent"          ;; method name
+      'sr-dbus-add-url-event);; handler function
+    (dbus-register-method
+      :session                    ;; bus to use (:session or :system)
+      sr-dbus-service                ;; ie. org.gnu.Emacs or org.gnu.Emacs.<username>
       sr-dbus-path           ;; ie. /org/gnu/Emacs/Sauron
       sr-dbus-interface      ;; ie. org.gnu.Emacs.Sauron
       "AddMsgEvent"          ;; method name
-      'sr-dbus-add-msg-event ;; handler function
-      )
+      'sr-dbus-add-msg-event) ;; handler function
     ;; make it introspectable ==> FIXME: doesn't work; hmmm...
     (dbus-register-method
-      :session
-      sr-dbus-service
-      sr-dbus-path
+      :session              ;; bus to use (:session or :system)
+      sr-dbus-service       ;; ie. org.gnu.Emacs or org.gnu.Emacs.<username>
+      sr-dbus-path          ;; ie. org.gnu.Emacs.Sauron 
       dbus-interface-introspectable
       "Introspect"
-      (lambda () ;; return the introspection XML for our object" 
-	(concat  ;; 
-	  "<!DOCTYPE node PUBLIC \"-//freedesktop//DTD D-BUS Object Introspection 1.0//EN\"
+      (lambda () ;; return the introspection XML for our object"
+	(concat  ;;
+	  "<!DOCTYPE node PUBLIC \"-//freedesktop//DTD D-BUS Object "
+	  "Introspection 1.0//EN\"
          \"http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd\">
-        <node name=\"" sr-dbus-path "\"> 
+        <node name=\"" sr-dbus-path "\">
           <interface name=\"" sr-dbus-interface "\">
             <method name=\"AddUrlEvent\">
               <arg name=\"origin\"   type=\"s\" direction=\"in\"/>
@@ -84,14 +90,28 @@
               <arg name=\"message\"  type=\"s\" direction=\"in\"/>
              </method>
           </interface>
-       </node>")))))
+       </node>"))))
+
+(defun sr-dbus-drop-cookie ()
+  "Write the DBUS_SESSION_BUS_ADDRESS to ~/.sauron-dbus."
+  (with-temp-file "~/.sauron-dbus"
+    (insert (getenv "DBUS_SESSION_BUS_ADDRESS"))))
+
+(defun sauron-dbus-start ()
+  "Start listening for sauron dbus messages."
+  (if (not (boundp 'dbus-path-emacs))
+    (message "sauron-dbus not available")
+    (unless sr-dbus-running
+      (sr-register-methods)
+      (when sauron-dbus-cookie
+	(sr-dbus-drop-cookie))
+      (setq sr-dbus-running t))))
 
 (defun sauron-dbus-stop ()
   "Stop listening for dbus messages."
   (when sr-dbus-running
     (dbus-unregister-service :session sr-dbus-service)
     (setq sr-dbus-running nil)))
-
 
 (defun sr-dbus-add-url-event (origin prio message url)
   "Add a dbus-originated event."
@@ -122,4 +142,3 @@
 (provide 'sauron-dbus)
 
 ;;; sauron-dbus ends here
-

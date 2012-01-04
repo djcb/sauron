@@ -247,7 +247,6 @@ One use for these kind of messages is to warn you when for example a torrent has
 been completed in 'Transmission'. In the torrent-completion script (see Preferences/
 Call-script-when-torrent-is-completed), add something like:
 #+begin_src sh
-#+begin_src sh
 :    dbus-send --session          	          \
 :    --dest="org.gnu.Emacs"	                  \
 :     "/org/gnu/Emacs/Sauron"                     \
@@ -257,6 +256,25 @@ Call-script-when-torrent-is-completed), add something like:
 
 I'm sure you can think of other useful applications.
 
+**** Using D-Bus outside your session
+
+Note, you normally only use D-Bus (i.e.., the d-bus session bus) when you are in
+the same /session/ -- say, your desktop environment. Thus, it is generally /not/
+possible to send yourself D-Bus messages from programs outside your session, for
+example something running from ~crontab~.
+
+For this, if you set =sauron-dbus-cookie= to non-nil (before starting sauron),
+it will drop a file =~/.sauron-dbus= which contains the D-Bus session bus
+address (=DBUS_SESSION_BUS_ADDRESS=). Using this address you can, in fact, send
+messages to sauron from outside your session, by doing something like in the
+previous examples, but first setting =DBUS_SESSION_BUS_ADDRESS=: 
+#+begin_src sh
+DBUS_SESSION_BUS_ADDRESS="`cat ~/.sauron-dbus`" dbus-send ....
+#+end_src
+
+We don't write =~/.sauron-dbus= as their may be security downsides to this -
+even though normally other users are not allowed to send to 'your' session bus,
+even with the cookie, it's always good to be a bit paranoid.
 
 ** adding new modules
 
