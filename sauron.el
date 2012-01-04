@@ -197,7 +197,7 @@ PROPS is a backend-specific plist.")
     buffer-read-only t
     overwrite-mode 'overwrite-mode-binary)
   (sr-set-header-line))
- 
+
 ;;;###autoload
 (defun sauron-start ()
   "Start sauron."
@@ -302,12 +302,11 @@ For debugging purposes."
 
 (defun sr-scroll-to-bottom ()
   "Scroll to the bottom of the sauron frame."
-  (let ((win (get-buffer-window sr-buffer)))
-    (when win
-      (save-selected-window
-	(select-window win)
-	(recenter -1)))))
-
+  (dolist (win (get-buffer-window-list sr-buffer nil t))
+    (select-window win)
+    (goto-char (point-max))
+    (recenter -1)))
+  
 ;; the main work horse functions
 (defun sauron-add-event (origin prio msg &optional func props)
   "Add a new event to the Sauron log with:
@@ -355,8 +354,8 @@ PROPS an origin-specific property list that will be passed to the hook funcs."
       (sr-create-buffer-maybe) ;; create buffer if it did not exist yet
       (with-current-buffer sr-buffer
 	(goto-char (point-max))
-	(insert line))
-      (sr-scroll-to-bottom)
+	(insert line)
+	(sr-scroll-to-bottom))
       (sr-ignore-errors-maybe ;; ignore errors unless we're debugging
 	(run-hook-with-args
 	  'sauron-event-added-functions origin prio msg props)))))
