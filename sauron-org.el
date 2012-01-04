@@ -46,8 +46,9 @@
 (defun sauron-org-stop ()
   "Stop checking appointments; restore the old function."
   (when sr-org-running
-    (setq appt-disp-window-function
-      (function sr-org-old-appt-func))))
+    (setq
+      appt-disp-window-function (function sr-org-old-appt-func)
+      sr-org-running nil)))
 
 
 (defun sr-org-handler-func (minutes-to-app new-time msg)
