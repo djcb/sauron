@@ -74,24 +74,16 @@ nick. Must be < 65536")
   'nil' meaning 'no limit', so that one's should be reserverd for
   the last field. Also, the width should be >= 3.")
 
-
-(defconst sr-column-name-alist
-  '( ( timestamp    . "Time"   )
-     ( origin       . "Orig"   )
-     ( priority     . "Prio"   )
-     ( message      . "Message"))
-  "Alist of the column names.")
-
-
-(defvar sauron-debug nil
-  "Whether do show errors.")
-
 (defvar sauron-timestamp-format "%Y-%m-%d %H:%M:%S"
   "Format for the timestamps, as per `format-time-string'.")
 
 (defvar sauron-max-line-length 80
   "Maximum length of messages in the log (longer messages will be
   truncated. If set to nil, there is no maximum.")
+
+(defvar sauron-scroll-to-bottom t
+  "Wether to automatically scroll the sauron window to the bottom
+when new events arrive. Set to nil to prevent this.")
 
 (defvar sauron-event-block-functions nil
   "Hook to be called *before* an event is added. If all of the
@@ -161,6 +153,18 @@ PROPS is a backend-specific plist.")
   "Keymap for the sauron buffer.")
 (fset 'sauron-mode-map sauron-mode-map)
 
+(defvar sauron-debug nil
+  "Whether to show errors. Unless you're actually debugging, it's
+good to leave this to nil, since when there's some error happening
+in your hook function, this may interfere with normal operation,
+e.g. when using ERC")
+
+(defconst sr-column-name-alist
+  '( ( timestamp    . "Time"   )
+     ( origin       . "Orig"   )
+     ( priority     . "Prio"   )
+     ( message      . "Message"))
+  "Alist of the column names.")
 
 (defvar sr-nick-event-hash nil
   "*internal* hash of nicks and the last time we raised an 'event'
@@ -355,7 +359,8 @@ PROPS an origin-specific property list that will be passed to the hook funcs."
       (with-current-buffer sr-buffer
 	(goto-char (point-max))
 	(insert line)
-	(sr-scroll-to-bottom))
+	(when sauron-scroll-to-bottom
+	  (sr-scroll-to-bottom)))
       (sr-ignore-errors-maybe ;; ignore errors unless we're debugging
 	(run-hook-with-args
 	  'sauron-event-added-functions origin prio msg props)))))

@@ -9,8 +9,8 @@
    (emacs) world around you. Events are things like 'appointment in 5 minutes',
    'bob pinged you on IRC', 'torrent download is complete' etc. Sauron shows
    those events like a list -- basically like a log. You can 'activate' an event
-   by either pressing =RET= when point is on it, or clicking it with the left
-   mouse button (=<down-mouse-1>=).
+   by either pressing =RET= when point is on it, or clicking it with the middle
+   mouse button (=<mouse-2>=).
 
    When activated, it can execute some arbitrary function -- for example in the
    case of IRC (ERC), it will switch you to the buffer (channel) it originated
@@ -89,11 +89,11 @@
     name, or your hobby project is mentioned in some IRC channel.
 
     So, for example, as part of your settings:
-    #+begin_example
+#+begin_example
 :;; watch for some animals
 :(setq sauron-watch-patterns
 :  '("\\bgnu\\b" "yak" "capybara" "wombat"))
-    #+end_example
+#+end_example
 
 *** watching nicks -- =sauron-watch-nicks=
 
@@ -158,7 +158,7 @@
 
     Now, our hook function could look something like:
 
-    #+begin_example
+#+begin_example
 :(add-hook 'sauron-event-added-functions
 :  (lambda (origin prio msg &optional props)
 :    (if (string-match "ping" msg)
@@ -167,7 +167,7 @@
 :    (when (>= prio 4)
 :	(sauron-fx-sox "/usr/share/sounds/uhoh.wav")
 :	(sauron-fx-gnome-osd msg 10))))
-    #+end_example
+#+end_example
 
 *** changing the looks of the sauron buffer
 
@@ -214,6 +214,10 @@
     - 5  minutes left: priority 4
     - 2  minutes left: priority 5
     For all other minutes, you'll get events with priority 2.
+
+    You should load org /before/ starting sauron, in particular before you set
+    ~appt-disp-window-function~, as sauron-org uses that same function (it will
+    preserve the existing functionality though).
 
 *** d-bus
 
@@ -269,7 +273,7 @@ address (=DBUS_SESSION_BUS_ADDRESS=). Using this address you can, in fact, send
 messages to sauron from outside your session, by doing something like in the
 previous examples, but first setting =DBUS_SESSION_BUS_ADDRESS=: 
 #+begin_src sh
-DBUS_SESSION_BUS_ADDRESS="`cat ~/.sauron-dbus`" dbus-send ....
+:DBUS_SESSION_BUS_ADDRESS="`cat ~/.sauron-dbus`" dbus-send ....
 #+end_src
 
 We don't write =~/.sauron-dbus= as their may be security downsides to this -
@@ -299,14 +303,14 @@ even with the cookie, it's always good to be a bit paranoid.
    =sauron-add-event= function directly. See its docstring for the details. Example:
 
 #+begin_src emacs-lisp
-(sauron-add-event
-   'kitchen           ;; origin
-   3                  ;; priority
-   "Coffee is ready!"
-   '(lambda ()        ;; function called when activated
-      (message "Coffee's ready, get it while it's hot!"))
-   '(:temperature 80)) ;; arbitrary props passed to
-                       ;; hook functions
+:(sauron-add-event
+:   'kitchen           ;; origin
+:   3                  ;; priority
+:   "Coffee is ready!"
+:   '(lambda ()        ;; function called when activated
+:      (message "Coffee's ready, get it while it's hot!"))
+:   '(:temperature 80)) ;; arbitrary props passed to
+:                       ;; hook functions
 #+end_src
 
    A typical pattern may also be to switch to the buffer of origin when the
