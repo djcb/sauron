@@ -190,7 +190,9 @@ e.g. when using ERC")
 
 
 (defun sauron-mode ()
-  "Major mode for the sauron."
+  "Major mode for sauron.
+
+\\{sauron-mode-map}."
   (interactive)
   (kill-all-local-variables)
   (use-local-map sauron-mode-map)
