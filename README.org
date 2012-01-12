@@ -314,9 +314,9 @@ even with the cookie, it's always good to be a bit paranoid.
 #+end_src
 
    A typical pattern may also be to switch to the buffer of origin when the
-   event is activated. The =sauron-switch-to-buffer= function may be useful
-   there, as it tries to ensure that the buffer is shown in the /other/ frame
-   (not the one with Sauron).
+   event is activated. The =sauron-switch-to-marker-or-buffer= function may be
+   useful there, as it tries to ensure that the buffer is shown in the /other/
+   frame (not the one with Sauron).
 
 
 ** sample configuration

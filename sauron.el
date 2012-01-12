@@ -383,23 +383,27 @@ any special faces from the line."
       (message "No callback defined for this line."))))
 
 
-(defun sauron-switch-to-buffer (buffer-or-name)
-  "Switch to BUFFER-OR-NAME in another frame/window."
-  (let* ((buf (if (buffer-live-p buffer-or-name)
-		buffer-or-name
-		(get-buffer buffer-or-name)))
-	  (win (and buf (get-buffer-window buf 'visible))))
-    (unless (and buf (buffer-live-p buf))
-      (error "Buffer %s not found" buf))
-    (let* ( ;; don't re-use the Sauron window
-	    (display-buffer-reuse-frames t)
-	    (pop-up-windows nil)
-	   ;; don't create new frames
-	    (pop-up-frames nil)
-	    ;; find a window for our buffer
-	    (win  (display-buffer buf t)))
-      (select-frame-set-input-focus (window-frame win)))))
-
+(defun sauron-switch-to-marker-or-buffer (mbn)
+  "Switch to MBN (marker-or-buffer-or-name) in another
+frame/window."
+  (if (not mbn)
+    (message "No target buffer defined")
+    (let* ((buf) (pos))
+      (if (markerp mbn)
+	(setq buf (marker-buffer mbn) pos (marker-position mbn))
+	(setq buf (or (buffer-live-p mbn) (get-buffer mbn))))
+      (unless (buffer-live-p buf)
+	(error "Buffer not found"))
+      (let* ( ;; don't re-use the Sauron window
+	      (display-buffer-reuse-frames t)
+	      (pop-up-windows nil)
+	      ;; don't create new frames
+	      (pop-up-frames nil)
+	      ;; find a window for our buffer
+	      (win (display-buffer buf t)))
+	(select-frame-set-input-focus (window-frame win))
+	(goto-char (if pos pos (point-max)))))))
+  
 
 (defun sr-show ()
   "Show the sauron buffer in a separate frame."
@@ -441,22 +445,6 @@ any special faces from the line."
       (let ((inhibit-read-only t))
 	(erase-buffer)))
     (message nil)))
-
-
-(defun sauron-switch-to-target ()
-  "Switch to the target buffer for the current line."
-  (interactive)
-  (let* ((target (get-text-property (point) 'target-buffer))
-	  (buf (and target (get-buffer target)))
-  	  (inhibit-read-only t))
-    (unless target
-      (error "No target specified for this line"))
-    (unless buf
-      (error "Target buffer not found"))
-    ;; remove the funky faces
-    (put-text-property (line-beginning-position)
-      (line-end-position) 'face 'default)
-    (switch-to-buffer-other-windown target)))
 
 
 ;; internal settings

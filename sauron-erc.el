@@ -61,10 +61,12 @@ The following events are erc-track
 
 (defun sr-erc-hook-func (proc parsed event)
   "Hook function, to be called for erc-matched-hook."
-  (let* ( (me     (erc-current-nick))
-	  (sender (car (erc-parse-user (erc-response.sender parsed))))
-	  (target (car (erc-response.command-args parsed)))
-	  (msg (erc-response.contents parsed)))
+  (let* ( (me      (erc-current-nick))
+	  (sender  (car (erc-parse-user (erc-response.sender parsed))))
+	  (channel (car (erc-response.command-args parsed)))
+	  (msg     (erc-response.contents parsed))
+	  (target  (if (buffer-live-p channel)
+		     (with-current-buffer channel (point-marker)))))
     (sauron-add-event
       'erc
       2
@@ -72,19 +74,20 @@ The following events are erc-track
 	(case event
 	  ('quit (concat "quit (" msg ")"))
 	  ('part (concat "left "
-		   (propertize target 'face 'sauron-highlight2-face)
+		   (propertize channel 'face 'sauron-highlight2-face)
 		   " (" msg ")"))
 	  ('join (concat "joined "
-		   (propertize target 'face 'sauron-highlight2-face)))))
+		   (propertize channel 'face 'sauron-highlight2-face)))))
       ;; FIXME: assumes we open separate window
       (when (eq event 'join)
 	(lexical-let ((target target))
-	  (lambda()  (sauron-switch-to-buffer target))))
-      `( :event  ,event
-	 :sender ,sender
-	 :me     ,me
-	 :target ,target
-	 :msg    ,msg))))
+	  (lambda()  (sauron-switch-to-marker-or-buffer target))))
+      `( :event    ,event
+	 :sender   ,sender
+	 :me       ,me
+	 :channel  ,channel
+	 :target   ,target
+	 :msg      ,msg))))
 
 
 (defun sr-erc-JOIN-hook-func (proc parsed)
@@ -106,31 +109,32 @@ The following events are erc-track
 
 (defun sr-erc-PRIVMSG-hook-func (proc parsed)
   "Hook function, to be called for erc-matched-hook."
-    (let* ( (me     (erc-current-nick))
-	    (sender (car (erc-parse-user (erc-response.sender parsed))))
-	    (target (car (erc-response.command-args parsed)))
-	    (msg (sr-erc-msg-clean (erc-response.contents parsed)))
+    (let* ( (me      (erc-current-nick))
+	    (sender  (car (erc-parse-user (erc-response.sender parsed))))
+	    (channel (car (erc-response.command-args parsed)))
+	    (msg     (sr-erc-msg-clean (erc-response.contents parsed)))
+	    (for-me  (string= me channel))
 	    (prio
 	      (cond
-		((string= sender "root") 2)    ;; bitlbee stuff; low-prio
-		((string= me target)	 3)    ;; private msg for me => prio 4
-		((string-match me msg)	 3)    ;; I'm mentioned => prio 3
-		(t			 2)))) ;; default
+		((string= sender "root") 2)  ;; e.g. bitlbee stuff; low-prio
+		(for-me	                 3)  ;; private msg for me => prio 4
+		((string-match me msg)	 3)  ;; I'm mentioned => prio 3
+		(t			 2)))  ;; default
+	    (target (if (buffer-live-p (get-buffer channel))
+		      (with-current-buffer channel (point-marker)))))
       (sauron-add-event
 	'erc
 	prio
 	(concat
 	  (propertize sender 'face 'sauron-highlight1-face) "@"
-	  (propertize target 'face 'sauron-highlight2-face)
+	  (propertize channel 'face 'sauron-highlight2-face)
 	  (propertize " says " 'face 'sauron-highlight1-face)
 	  msg)
 	;; FIXME: assumes we open separate window
-	(lexical-let* ((bufname (if (string= target me) sender target)))
-	  (lambda()
-	    (let ((buf (get-buffer bufname)))
-	      (if (buffer-live-p buf)
-		(sauron-switch-to-buffer buf)
-		(message "Buffer %S not available" bufname)))))
+	(lexical-let* ((target-mark target) 
+			(target-buf (if for-me sender channel)))
+	  (lambda ()
+	    (sauron-switch-to-marker-or-buffer (or target-mark target-buf))))
 	`( :event   privmsg
 	   :sender ,sender
 	   :me     ,me
