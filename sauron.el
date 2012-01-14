@@ -189,16 +189,11 @@ e.g. when using ERC")
 	sauron-column-alist))))
 
 
-(defun sauron-mode ()
+(define-derived-mode sauron-mode nil "Sauron"
   "Major mode for sauron.
 
 \\{sauron-mode-map}."
-  (interactive)
-  (kill-all-local-variables)
-  (use-local-map sauron-mode-map)
   (setq
-    major-mode 'sauron-mode
-    mode-name "Sauron"
     truncate-lines t
     buffer-read-only t
     overwrite-mode 'overwrite-mode-binary)
