@@ -189,16 +189,11 @@ e.g. when using ERC")
 	sauron-column-alist))))
 
 
-(defun sauron-mode ()
+(define-derived-mode sauron-mode nil "Sauron"
   "Major mode for sauron.
 
 \\{sauron-mode-map}."
-  (interactive)
-  (kill-all-local-variables)
-  (use-local-map sauron-mode-map)
   (setq
-    major-mode 'sauron-mode
-    mode-name "Sauron"
     truncate-lines t
     buffer-read-only t
     overwrite-mode 'overwrite-mode-binary)
@@ -350,12 +345,12 @@ PROPS an origin-specific property list that will be passed to the hook funcs."
     (let* ((line (sr-event-line origin prio msg))
 	    ;; add the callback as a text property, remove any embedded newlines,
 	    ;; truncate if necessary append a newline
-	    (line (concat
-		    (truncate-string-to-width
-		      (propertize (replace-regexp-in-string "\n" " " line)
-			'callback func)
-		      sauron-max-line-length 0 nil t)
-		      "\n"))
+	    (line (replace-regexp-in-string "\n" " " line))
+	    (line (if sauron-max-line-length
+		      (truncate-string-to-width
+		       line sauron-max-line-length 0 nil t)
+		    line))
+	    (line (concat (propertize line 'callback func) "\n"))
 	    (inhibit-read-only t))
       (sr-create-buffer-maybe) ;; create buffer if it did not exist yet
       (with-current-buffer sr-buffer
