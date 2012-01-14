@@ -57,11 +57,11 @@ could be lists, too."
   (let* ((left (string-to-number minutes-to-app))
 	  (prio ;; priorities, hard-coded....
 	    (cond
-	      ((= left 15) 3)
-	      ((= left 10) 3)
-	      ((= left 5)  4)
-	      ((= left 2)  5)
-	      (t 2))))
+	      ((> left 15) 2)
+	      ((> left 10) 3)
+	      ((> left 5)  3)
+	      ((> left 2)  4)
+	      (t 5))))
     (sauron-add-event 'org prio
       (format "%s minutes left before %s" minutes-to-app msg)
       'org-agenda-list
