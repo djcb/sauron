@@ -215,6 +215,10 @@
     - 2  minutes left: priority 5
     For all other minutes, you'll get events with priority 2.
 
+    Note that you can influence the number of warnings and the time they start
+    by setting the variables =appt-display-interval= and
+    =appt-message-warning-time=, as documented in emacs manual.
+
     You should load org /before/ starting sauron, in particular before you set
     ~appt-disp-window-function~, as sauron-org uses that same function (it will
     preserve the existing functionality though).
@@ -271,7 +275,7 @@ For this, if you set =sauron-dbus-cookie= to non-nil (before starting sauron),
 it will drop a file =~/.sauron-dbus= which contains the D-Bus session bus
 address (=DBUS_SESSION_BUS_ADDRESS=). Using this address you can, in fact, send
 messages to sauron from outside your session, by doing something like in the
-previous examples, but first setting =DBUS_SESSION_BUS_ADDRESS=: 
+previous examples, but first setting =DBUS_SESSION_BUS_ADDRESS=:
 #+begin_src sh
 :DBUS_SESSION_BUS_ADDRESS="`cat ~/.sauron-dbus`" dbus-send ....
 #+end_src
