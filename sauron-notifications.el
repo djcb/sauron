@@ -28,6 +28,18 @@
 
 ;; this tracks the D-Bus notifications module that ships with Emacs 24
 
+(defvar sauron-notifications-urgency-to-priority
+  '(:low 3 :normal 4 :critical 5 :otherwise 2)
+  "A map from urgency parameter for `notifications-notify' to priority")
+
+(defun sr-notifications-urgency-to-priority (urgency)
+  (plist-get sauron-notifications-urgency-to-priority
+             (case urgency
+               (low ':low)
+               (normal ':normal)
+               (critical ':critical)
+               (otherwise ':otherwise))))
+
 (defun sauron-notifications-start ()
   "Start tracking notifications."
   (if (not (fboundp 'notifications-notify))
@@ -50,12 +62,8 @@
   "\"Hook\" `sauron-add-event' to `notifications-notify'"
   (let ((title (plist-get params :title))
         (body (plist-get params :body))
-        (prio
-	  (case (plist-get params :urgency)
-	    (low 3)
-	    (normal 4)
-	    (critical 5)
-	    (otherwise 2))))
+        (prio (sr-notifications-urgency-to-priority
+               (plist-get params :urgency))))
     (sauron-add-event
       'notify
       prio
