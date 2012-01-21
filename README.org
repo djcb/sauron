@@ -235,7 +235,7 @@
 :    string:shell uint32:3 string:"Link: Emacs-Fu" \
 :    string:"http://emacs-fu.blogspot.com"
 #+end_src
-The four parameters are resp. the sender ('shell'), the priority ('3' in the
+The four parameters are resp. the originator ('shell'), the priority ('3' in the
 example), a description and a URL. This will show up in the sauron buffer (if
 the priority is high enough), and if you activate the event (press RET), your
 browser will visit the link.
@@ -251,8 +251,8 @@ The three parameters are resp. the sender ('shell'), the priority ('3' in the
 example), and message. This will show up in the sauron buffer (if the priority
 is high enough).
 
-One use for these kind of messages is to warn you when for example a torrent has
-been completed in 'Transmission'. In the torrent-completion script (see Preferences/
+As an example, you can get a notification when torrent has been completed in
+'Transmission'. In the torrent-completion script (see Preferences/
 Call-script-when-torrent-is-completed), add something like:
 #+begin_src sh
 :    dbus-send --session          	          \
@@ -262,7 +262,9 @@ Call-script-when-torrent-is-completed), add something like:
 :    string:Transmission uint32:3 string:"Torrent completed: $TR_TORRENT_NAME"
 #+end_src
 
-I'm sure you can think of other useful applications.
+Note, if you start transmission before you start your session, see `Using D-Bus
+outside your session'.
+
 
 **** Using D-Bus outside your session
 
@@ -280,7 +282,7 @@ previous examples, but first setting =DBUS_SESSION_BUS_ADDRESS=:
 :DBUS_SESSION_BUS_ADDRESS="`cat ~/.sauron-dbus`" dbus-send ....
 #+end_src
 
-We don't write =~/.sauron-dbus= as their may be security downsides to this -
+We don't write =~/.sauron-dbus= as there may be security downsides to this -
 even though normally other users are not allowed to send to 'your' session bus,
 even with the cookie, it's always good to be a bit paranoid.
 
@@ -360,5 +362,5 @@ even with the cookie, it's always good to be a bit paranoid.
 :(add-hook 'sauron-event-block-functions
 :  (lambda (origin prio msg &optional props)
 :    (or
-:      (string-match "^*** Users" msg)))) ;; don't notify on IRC spam
+:      (string-match "^*** Users" msg)))) ;; filter out IRC spam
 #+end_src
