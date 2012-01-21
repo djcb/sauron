@@ -1,4 +1,4 @@
-;;; sauron-notications.el --- a notifications tracking module, part of sauron
+;;; sauron-notifications.el --- a notifications tracking module, part of sauron
 ;;
 ;; Copyright (C) 2012 Dirk-Jan C. Binnema
 ;; Copyright (C) 2012 Takafumi Arakaki
@@ -28,7 +28,7 @@
 
 ;; this tracks the D-Bus notifications module that ships with Emacs 24
 
-(defun sauron-notications-start ()
+(defun sauron-notifications-start ()
   "Start tracking notifications."
   (if (not (fboundp 'notifications-notify))
     (message "sauron-notifications not available")
@@ -37,7 +37,7 @@
       (ad-enable-advice 'notifications-notify 'after 'sr-notifications-hook)
       (ad-activate 'notifications-notify))))
 
-(defun sauron-notications-stop ()
+(defun sauron-notifications-stop ()
   "Stop tracking notifications."
   (when (boundp 'notifications-notify)
     (progn
@@ -62,4 +62,4 @@
       (concat title
 	(if (and title body) " - ") body))))
 
-(provide 'sauron-notications)
+(provide 'sauron-notifications)
