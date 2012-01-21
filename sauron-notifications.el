@@ -1,6 +1,7 @@
 ;;; sauron-notications.el --- a notifications tracking module, part of sauron
 ;;
 ;; Copyright (C) 2012 Dirk-Jan C. Binnema
+;; Copyright (C) 2012 Takafumi Arakaki
 
 ;; This file is not part of GNU Emacs.
 ;;
