@@ -34,7 +34,7 @@
 (eval-when-compile (require 'cl))
 
 (defvar sauron-modules
-  '(sauron-erc sauron-dbus sauron-org)
+  '(sauron-erc sauron-dbus sauron-org sauron-notifications)
   "List of sauron modules to use. Currently supported are:
 sauron-erc, sauron-org and sauron-dbus.")
 
@@ -307,7 +307,7 @@ For debugging purposes."
     (select-window win)
     (goto-char (point-max))
     (recenter -1)))
-  
+
 ;; the main work horse functions
 (defun sauron-add-event (origin prio msg &optional func props)
   "Add a new event to the Sauron log with:
@@ -398,7 +398,7 @@ frame/window."
 	      (win (display-buffer buf t)))
 	(select-frame-set-input-focus (window-frame win))
 	(goto-char (if pos pos (point-max)))))))
-  
+
 
 (defun sr-show ()
   "Show the sauron buffer in a separate frame."
