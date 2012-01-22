@@ -33,10 +33,11 @@
    with something like the following in your =.emacs=:
 
    ;; set load path, obviously replace "<path-to-sauron-dir>" with the actual path...
-   #+being_example
-:   (add-to-list 'load-path "<path-to-sauron-dir>")
-:   (require 'sauron)
-   #end_example
+
+``` lisp
+   (add-to-list 'load-path "<path-to-sauron-dir>")
+   (require 'sauron)
+```
 
    Now, you can start sauron with... =M-x sauron-start=, and stop it with =M-x
    sauron-stop=.
@@ -89,11 +90,11 @@
     name, or your hobby project is mentioned in some IRC channel.
 
     So, for example, as part of your settings:
-#+begin_example
-:;; watch for some animals
-:(setq sauron-watch-patterns
-:  '("\\bgnu\\b" "yak" "capybara" "wombat"))
-#+end_example
+``` lisp
+;; watch for some animals
+(setq sauron-watch-patterns
+  '("\\bgnu\\b" "yak" "capybara" "wombat"))
+```
 
 *** watching nicks -- =sauron-watch-nicks=
 
@@ -187,8 +188,8 @@
 
 ** the backend modules
 
-   Currently, three backend modules have been implemented - ERC, org-mode and
-   d-bus. Hopefully, more will follow.
+   Currently, four backend modules have been implemented - *ERC*, *org-mode*,
+   *d-bus* and *notifications* (for emacs 24). Hopefully, more will follow.
 
 *** erc
 
@@ -235,10 +236,11 @@
 :    string:shell uint32:3 string:"Link: Emacs-Fu" \
 :    string:"http://emacs-fu.blogspot.com"
 #+end_src
-The four parameters are resp. the originator ('shell'), the priority ('3' in the
-example), a description and a URL. This will show up in the sauron buffer (if
-the priority is high enough), and if you activate the event (press RET), your
-browser will visit the link.
+
+    The four parameters are resp. the originator ('shell'), the priority ('3' in the
+    example), a description and a URL. This will show up in the sauron buffer (if
+    the priority is high enough), and if you activate the event (press RET), your
+    browser will visit the link.
 
 #+begin_src sh
 :    dbus-send --session          	          \
@@ -247,6 +249,7 @@ browser will visit the link.
 :    "org.gnu.Emacs.Sauron.AddMsgEvent"           \
 :    string:shell uint32:3 string:"Hello, world!"
 #+end_src
+
 The three parameters are resp. the sender ('shell'), the priority ('3' in the
 example), and message. This will show up in the sauron buffer (if the priority
 is high enough).
