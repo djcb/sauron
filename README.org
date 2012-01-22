@@ -268,23 +268,34 @@ outside your session'.
 
 **** Using D-Bus outside your session
 
-Note, you normally only use D-Bus (i.e.., the d-bus session bus) when you are in
-the same /session/ -- say, your desktop environment. Thus, it is generally /not/
-possible to send yourself D-Bus messages from programs outside your session, for
-example something running from ~crontab~.
+     Note, you normally only use D-Bus (i.e.., the d-bus session bus) when you are in
+     the same /session/ -- say, your desktop environment. Thus, it is generally /not/
+     possible to send yourself D-Bus messages from programs outside your session, for
+     example something running from ~crontab~.
 
-For this, if you set =sauron-dbus-cookie= to non-nil (before starting sauron),
-it will drop a file =~/.sauron-dbus= which contains the D-Bus session bus
-address (=DBUS_SESSION_BUS_ADDRESS=). Using this address you can, in fact, send
-messages to sauron from outside your session, by doing something like in the
-previous examples, but first setting =DBUS_SESSION_BUS_ADDRESS=:
+     For this, if you set =sauron-dbus-cookie= to non-nil (before starting sauron),
+     it will drop a file =~/.sauron-dbus= which contains the D-Bus session bus
+     address (=DBUS_SESSION_BUS_ADDRESS=). Using this address you can, in fact, send
+     messages to sauron from outside your session, by doing something like in the
+     previous examples, but first setting =DBUS_SESSION_BUS_ADDRESS=:
 #+begin_src sh
 :DBUS_SESSION_BUS_ADDRESS="`cat ~/.sauron-dbus`" dbus-send ....
 #+end_src
 
-We don't write =~/.sauron-dbus= as there may be security downsides to this -
-even though normally other users are not allowed to send to 'your' session bus,
-even with the cookie, it's always good to be a bit paranoid.
+     We don't write =~/.sauron-dbus= as there may be security downsides to this -
+     even though normally other users are not allowed to send to 'your' session bus,
+     even with the cookie, it's always good to be a bit paranoid.
+
+*** notifications
+
+    sauron-notifications tracks notifications sent using `notifications-notify',
+    which was added in the (not yet released) emacs 24. You can use
+    `sauron-notifications-urgency-to-priority-plist' for the mapping of the
+    'urgency' field of notification to the sauron's priority field.
+
+    Note, one should be careful when calling `notifications-notify' from
+    functions listed in the `sauron-event-added-functions' hook, as to not
+    create some infinite recursion.
 
 ** adding new modules
 
@@ -302,7 +313,7 @@ even with the cookie, it's always good to be a bit paranoid.
    something happens. This is done using =sauron-add-event= (see it's
    documentation).
 
-** Using =sauron= from your other modules
+** Using =sauron= in other elisp
 
    If you want to create simple sauron-events from other elisp code, writing a
    backend modules might be unnecessary; you can simply call the

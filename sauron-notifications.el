@@ -28,32 +28,33 @@
 
 ;; this tracks the D-Bus notifications module that ships with Emacs 24
 
-(defvar sauron-notifications-urgency-to-priority
+(defvar sauron-notifications-urgency-to-priority-plist
   '(:low 3 :normal 4 :critical 5 :otherwise 2)
-  "A map from urgency parameter for `notifications-notify' to priority")
+  "A map from the :urgency parameter in `notifications-notify' to
+  Sauron's priority.")
 
 (defun sr-notifications-urgency-to-priority (urgency)
-  (plist-get sauron-notifications-urgency-to-priority
-             (case urgency
-               (low ':low)
-               (normal ':normal)
-               (critical ':critical)
-               (otherwise ':otherwise))))
+  "Return the priority (sauron) corresponding to some
+urgency (notifications)."
+  (plist-get sauron-notifications-urgency-to-priority-plist
+    (case urgency
+      (low ':low)
+      (normal ':normal)
+      (critical ':critical)
+      (otherwise ':otherwise))))
 
 (defun sauron-notifications-start ()
   "Start tracking notifications."
   (if (not (fboundp 'notifications-notify))
     (message "sauron-notifications not available")
-    (progn
-      ;; activate the advice
+    (progn ;; activate the advice
       (ad-enable-advice 'notifications-notify 'after 'sr-notifications-hook)
       (ad-activate 'notifications-notify))))
 
 (defun sauron-notifications-stop ()
   "Stop tracking notifications."
   (when (boundp 'notifications-notify)
-    (progn
-      ;; activate the advice
+    (progn ;; activate the advice
       (ad-disable-advice 'notifications-notify 'after 'sr-notifications-hook)
       (ad-deactivate 'notifications-notify))))
 
@@ -71,3 +72,5 @@
 	(if (and title body) " - ") body))))
 
 (provide 'sauron-notifications)
+
+;; sauron-notifications ends here

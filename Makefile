@@ -1,4 +1,4 @@
-## Copyright (C) 2011 Dirk-Jan C. Binnema <djcb@djcbsoftware.nl>
+## Copyright (C) 2011-2012 Dirk-Jan C. Binnema <djcb@djcbsoftware.nl>
 ##
 ## This program is free software; you can redistribute it and/or modify
 ## it under the terms of the GNU General Public License as published by
@@ -16,10 +16,11 @@
 
 VERSION=$(shell grep "^;; Version:" sauron.el  | sed 's/^[^0-9]*//')
 
-FILES=	sauron.el	\
-	sauron-dbus.el  \
-	sauron-erc.el   \
-	sauron-org.el
+FILES=	sauron.el		\
+	sauron-dbus.el		\
+	sauron-erc.el		\
+	sauron-org.el		\
+	sauron-notifications.el
 
 ELPA_FILES = $(FILES)	\
 	sauron-pkg.el
@@ -38,4 +39,3 @@ sauron-pkg.el: sauron-pkg.el.in sauron.el
 
 clean:
 	rm -rf sauron-pkg.el *.tar *.gz sauron-$(VERSION)
-
