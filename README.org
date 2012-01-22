@@ -34,7 +34,7 @@
 
    ;; set load path, obviously replace "<path-to-sauron-dir>" with the actual path...
 
-``` lisp
+```lisp
    (add-to-list 'load-path "<path-to-sauron-dir>")
    (require 'sauron)
 ```
@@ -90,7 +90,7 @@
     name, or your hobby project is mentioned in some IRC channel.
 
     So, for example, as part of your settings:
-``` lisp
+```lisp
 ;; watch for some animals
 (setq sauron-watch-patterns
   '("\\bgnu\\b" "yak" "capybara" "wombat"))
