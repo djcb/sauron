@@ -34,10 +34,10 @@
 
    ;; set load path, obviously replace "<path-to-sauron-dir>" with the actual path...
 
-```lisp
-   (add-to-list 'load-path "<path-to-sauron-dir>")
-   (require 'sauron)
-```
+#+begin_example
+:   (add-to-list 'load-path "<path-to-sauron-dir>")
+:   (require 'sauron)
+#+end_example
 
    Now, you can start sauron with... =M-x sauron-start=, and stop it with =M-x
    sauron-stop=.
@@ -90,11 +90,11 @@
     name, or your hobby project is mentioned in some IRC channel.
 
     So, for example, as part of your settings:
-```lisp
-;; watch for some animals
-(setq sauron-watch-patterns
-  '("\\bgnu\\b" "yak" "capybara" "wombat"))
-```
+#+begin_example
+:;; watch for some animals
+:(setq sauron-watch-patterns
+:  '("\\bgnu\\b" "yak" "capybara" "wombat"))
+#+end_example
 
 *** watching nicks -- =sauron-watch-nicks=
 
@@ -122,14 +122,15 @@
     those functions returns non-nil, the event will be blocked. See the emacs
     documentation for a general introduction to hook functions, here's an
     example:
-    #+begin_example
-    :(add-hook 'sauron-event-block-functions
+
+#+begin_example
+:(add-hook 'sauron-event-block-functions
 :  (lambda (origin prio msg &optional props)
 :    (or
 :      (string-match "foo" msg) ;; ignore events that match 'foo'
 :      ;; other matchers
 :     )))
-    #+end_example
+#+end_example
 
     Note that the =props= parameter is a backend specific property-list, which
     allows you e.g. (for the ERC-backend) to get the sender of some ERC message,
@@ -180,16 +181,18 @@
    John Wiegley's [[https://github.com/jwiegley/alert][alert.el]] has a bit of overlap with sauron; however, I've added
    some wrapper function to make it trivial to feed sauron events into
    alert. Simply adding:
+
 #begin_src emacs-lisp
      (add-hook 'sauron-event-added-functions 'sauron-alert-el-adapter)
 #end_src
-   in your setup should do the trick (of course. alert.el must be loaded).
+
+   in your setup should do the trick (of course, =alert.el= must be loaded).
 
 
 ** the backend modules
 
-   Currently, four backend modules have been implemented - *ERC*, *org-mode*,
-   *d-bus* and *notifications* (for emacs 24). Hopefully, more will follow.
+   Currently, four backend modules have been implemented - *ERC*, *org-mode*, *d-bus*
+   and *notifications* (for emacs 24). Hopefully, more will follow.
 
 *** erc
 
@@ -250,13 +253,14 @@
 :    string:shell uint32:3 string:"Hello, world!"
 #+end_src
 
-The three parameters are resp. the sender ('shell'), the priority ('3' in the
-example), and message. This will show up in the sauron buffer (if the priority
-is high enough).
+    The three parameters are resp. the sender ('shell'), the priority ('3' in the
+    example), and message. This will show up in the sauron buffer (if the priority
+    is high enough).
 
-As an example, you can get a notification when torrent has been completed in
-'Transmission'. In the torrent-completion script (see Preferences/
-Call-script-when-torrent-is-completed), add something like:
+    As an example, you can get a notification when torrent has been completed in
+    'Transmission'. In the torrent-completion script (see Preferences/
+    Call-script-when-torrent-is-completed), add something like:
+
 #+begin_src sh
 :    dbus-send --session          	          \
 :    --dest="org.gnu.Emacs"	                  \
@@ -265,8 +269,8 @@ Call-script-when-torrent-is-completed), add something like:
 :    string:Transmission uint32:3 string:"Torrent completed: $TR_TORRENT_NAME"
 #+end_src
 
-Note, if you start transmission before you start your session, see `Using D-Bus
-outside your session'.
+    Note, if you start transmission before you start your session, see `Using D-Bus
+    outside your session'.
 
 
 **** Using D-Bus outside your session
