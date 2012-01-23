@@ -81,6 +81,9 @@ nick. Must be < 65536")
   "Maximum length of messages in the log (longer messages will be
   truncated. If set to nil, there is no maximum.")
 
+(defvar sauron-sticky-frame nil
+  "If t, show the sauron frame on every (virtual) desktop.")
+
 (defvar sauron-scroll-to-bottom t
   "Wether to automatically scroll the sauron window to the bottom
 when new events arrive. Set to nil to prevent this.")
@@ -308,6 +311,7 @@ For debugging purposes."
     (goto-char (point-max))
     (recenter -1)))
 
+
 ;; the main work horse functions
 (defun sauron-add-event (origin prio msg &optional func props)
   "Add a new event to the Sauron log with:
@@ -414,7 +418,8 @@ frame/window."
 	  (switch-to-buffer-other-frame sr-buffer)
 	  (let ((frame-params
 		  (append
-		    '((tool-bar-lines . 0) (menu-bar-lines . 0))
+		    `((tool-bar-lines . 0) (menu-bar-lines . 0)
+		       (unsplittable . t) (sticky . ,sauron-sticky-frame))
 		    (x-parse-geometry sauron-frame-geometry))))
 	    (modify-frame-parameters nil frame-params))))
     (set-window-dedicated-p (selected-window) t)))
