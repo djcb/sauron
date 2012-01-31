@@ -176,15 +176,20 @@
     You can customize the columns shown in the sauron buffer by setting
     =sauron-column-alist= - see its documentation.
 
-*** customizing window properties
+    You can remove the mode-line in the sauron-buffer by setting
+    =sauron-hide-mode-line= to  =t=, e.g.:
+
+#+begin_src
+:  (setq sauron-hide-mode-line t)
+#+end_src
 
 **** stickiness
 
     You can make the Sauron window appear on every (virtual) desktop by setting
     ~sauron-sticky-add~ to t, i.e..
 #+begin_src
-    (setq sauron-sticky-frame t)
-#+end_src 
+:  (setq sauron-sticky-frame t)
+#+end_src
 
     in your configuration. Depending on your window manager, this may also set
     the frame to be /always-on-top/.
