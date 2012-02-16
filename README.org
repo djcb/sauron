@@ -52,21 +52,55 @@
 
    You can clear all events with =M-x sauron-clear= (default keybinding: =c=).
 
+   You can toggle between showing and hiding of the Sauron frame or window using
+   =M-x sauron-toggle-hide-show=.
+
    Sauron (by default) loads the =sauron-erc=, =sauron-org= and =sauron-dbus=
    modules; if you don't have ERC, org-mode or d-bus support, these will simply
    be ignored. If so desired, you can customize =sauron-modules=. See below for
    some specifics about the backends.
 
-
 ** customization
 
    I've tried hard to come up with reasonable defaults, such that users can get
    started with sauron without reading too much documentation or having to write
-   emacs-lisp etc.; still, I've also tried to make sauron very configurable -
+   elisp etc.; still, I've also tried to make sauron very configurable -
    different people have different needs, so it should be possible to coerce the
    software in whatever direction.
 
    Below are some customization points.
+
+*** sauron look-and-feel
+
+    Sauron can be shown either as a separate frame (the default), or embedded in
+    your current frame. For the latter, set =sauron-separate-frame= to =nil=:
+
+#+begin_src
+:  (setq sauron-separate-frame nil)
+#+end_src
+
+    Note, this latter option (embedded sauron) is *experimental*. Emacs does not
+    make it easy to do this reliable. Note, you can use: =M-x
+    sauron-toggle-hide-show= to hide/show the sauron frame or window.
+
+    You can customize the columns shown in the sauron buffer by setting
+    =sauron-column-alist= - see its documentation.
+
+    You can remove the mode-line in the sauron-buffer by setting
+    =sauron-hide-mode-line= to =t=, e.g.:
+#+begin_src
+:  (setq sauron-hide-mode-line t)
+#+end_src
+
+    You can make the Sauron window appear on every (virtual) desktop by setting
+    ~sauron-sticky-add~ to t, i.e..
+#+begin_src
+:  (setq sauron-sticky-frame t)
+#+end_src
+
+    in your configuration. Depending on your window manager, this may also set
+    the frame to be /always-on-top/. Obviously, this is only effective if you
+    use sauron in a separate frame.
 
 *** priorities -- =sauron-min-priority=
 
@@ -170,29 +204,6 @@
 :	(sauron-fx-sox "/usr/share/sounds/uhoh.wav")
 :	(sauron-fx-gnome-osd msg 10))))
 #+end_example
-
-*** changing the looks of the sauron buffer
-
-    You can customize the columns shown in the sauron buffer by setting
-    =sauron-column-alist= - see its documentation.
-
-    You can remove the mode-line in the sauron-buffer by setting
-    =sauron-hide-mode-line= to  =t=, e.g.:
-
-#+begin_src
-:  (setq sauron-hide-mode-line t)
-#+end_src
-
-**** stickiness
-
-    You can make the Sauron window appear on every (virtual) desktop by setting
-    ~sauron-sticky-add~ to t, i.e..
-#+begin_src
-:  (setq sauron-sticky-frame t)
-#+end_src
-
-    in your configuration. Depending on your window manager, this may also set
-    the frame to be /always-on-top/.
 
 
 ** connecting to alert.el
@@ -372,8 +383,14 @@
 : ;; in one of the hooks may cause ERC to fail (i.e., the message won't come
 : ;; trough).
 :
+:
+:(global-set-key (kbd "C-c s") 'sauron-toggle-hide-show)
+:
 :(setq
 :  sauron-max-line-length 120
+:
+:  ;; uncomment to show sauron in the current frame
+:  ;; sauron-separate-frame nil
 :
 :  ;; you probably want to add your own nickname to the these patterns
 :  sauron-watch-patterns

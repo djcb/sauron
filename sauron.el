@@ -5,8 +5,12 @@
 ;; Author: Dirk-Jan C. Binnema <djcb@djcbsoftware.nl>
 ;; Maintainer: Dirk-Jan C. Binnema <djcb@djcbsoftware.nl>
 ;; Created: 06 Dec 2011
-;; Version: 0.2
+;; Version: 0.3
 ;; Keywords:comm,frames
+
+;; NOTE: odd minor version numbers (0.3, 0.5, ...) are for development, even
+;; numbers (0.2, 0.4, ...) are for releases (ELPA etc.).
+
 
 ;; This file is not part of GNU Emacs.
 ;;
@@ -37,6 +41,10 @@
   '(sauron-erc sauron-dbus sauron-org sauron-notifications)
   "List of sauron modules to use. Currently supported are:
 sauron-erc, sauron-org and sauron-dbus.")
+
+(defvar sauron-separate-frame t
+  "Show sauron in a separate frame; if set to nil (*experimental*),
+show sauron embedded in the current frame.")
 
 (defvar sauron-frame-geometry "100x8+0-0"
   "Geometry (size, position) of the the sauron frame, in X geometry
@@ -205,34 +213,44 @@ e.g. when using ERC")
     overwrite-mode 'overwrite-mode-binary)
   (sr-set-header-line))
 
+(defvar sr-running-p nil
+  "*internal* Whether sauron is running.")
+
 ;;;###autoload
 (defun sauron-start ()
   "Start sauron."
   (interactive)
-  (dolist (module sauron-modules)
-    (require module)
-    (let* ((start-func-name (concat (symbol-name module) "-start"))
-	    (start-func (intern-soft start-func-name)))
-      (if start-func
-	(funcall start-func)
-	(error "%s not defined" start-func-name))))
-  (message "Sauron has started")
-  (setq sr-nick-event-hash (make-hash-table :size 100 :test 'equal))
-  (sr-show)
-  (sauron-add-event 'sauron 1 "sauron has started"))
+  (unless sr-running-p
+    (dolist (module sauron-modules)
+      (require module)
+      (let* ((start-func-name (concat (symbol-name module) "-start"))
+	      (start-func (intern-soft start-func-name)))
+	(if start-func
+	  (funcall start-func)
+	  (error "%s not defined" start-func-name))))
+    (message "Sauron has started")
+    (setq
+      sr-running-p t
+      sr-nick-event-hash (make-hash-table :size 100 :test 'equal))
+    (if sauron-separate-frame
+      (sr-show-in-separate-frame)
+      (sr-show-embedded))
+    (sauron-add-event 'sauron 1 "sauron has started")))
 
 (defun sauron-stop ()
   "Stop sauron."
   (interactive)
-  (dolist (module sauron-modules)
-    (let* ((stop-func-name (concat (symbol-name module) "-stop"))
-	    (stop-func (intern-soft stop-func-name)))
-      (if stop-func
-	(funcall stop-func)
-	(error "%s not defined" stop-func-name))))
-  (message "Sauron has stopped")
-  (sauron-add-event 'sauron 1 "sauron has stopped")
-  (sr-hide))
+  (when sr-running-p
+    (dolist (module sauron-modules)
+      (let* ((stop-func-name (concat (symbol-name module) "-stop"))
+	      (stop-func (intern-soft stop-func-name)))
+	(if stop-func
+	  (funcall stop-func)
+	  (error "%s not defined" stop-func-name))))
+    (message "Sauron has stopped")
+    (setq sr-running-p nil)
+    (sauron-add-event 'sauron 1 "sauron has stopped")
+    (sr-hide)))
 
 (defun sr-pattern-matches (str ptrnlist cmpfunc)
   "Return t if any regexp in the list PTRNLIST matches STR,
@@ -298,8 +316,10 @@ For debugging purposes."
 		  ('timestamp
 		    (propertize (format-time-string sauron-timestamp-format
 				  (current-time)) 'face 'sauron-timestamp-face))
-		  ('priority (propertize (format "%d" prio) 'face 'sauron-priority-face))
-		  ('origin   (propertize (symbol-name origin) 'face 'sauron-origin-face))
+		  ('priority (propertize (format "%d" prio)
+			       'face 'sauron-priority-face))
+		  ('origin   (propertize (symbol-name origin)
+			       'face 'sauron-origin-face))
 		  ('message  msg)
 		  (otherwise (error "Unknown field %S" field)))))
 	(if width
@@ -407,9 +427,8 @@ frame/window."
 	(goto-char (if pos pos (point-max)))))))
 
 
-(defun sr-show ()
+(defun sr-show-in-separate-frame ()
   "Show the sauron buffer in a separate frame."
-  (interactive)
   (setq sr-buffer (sr-create-buffer-maybe))
   (let* ((win (get-buffer-window sr-buffer))
 	 (frame (and win (window-frame frame))))
@@ -427,18 +446,48 @@ frame/window."
 	    (modify-frame-parameters nil frame-params))))
 	(if sauron-hide-mode-line
 	  (setq mode-line-format nil))
-    (set-window-dedicated-p (selected-window) t)))
+    (set-window-dedicated-p (selected-window) t))
+  (setq sr-sauron-visible t))
+
+
+(defun sr-show-embedded ()
+  "Show the sauron buffer embedded in the current frame."
+  (setq sr-buffer (sr-create-buffer-maybe))
+  (let* ((win (or (get-buffer-window sr-buffer)
+		  (split-window (frame-root-window) -8 'below))))
+    (with-selected-window win
+      (switch-to-buffer sr-buffer)
+      (set-window-dedicated-p (selected-window) t)))
+    (setq sr-sauron-visible t))
+
 
 (defun sr-hide ()
-  "Hide the sauron buffer and/of frame."
-  (interactive)
+  "Hide the sauron buffer, window and/or frame."
+  (setq sr-sauron-visible nil) ;;
   (unless (buffer-live-p sr-buffer)
     (error "No sauron buffer found"))
   (let* ((win (get-buffer-window sr-buffer t))
 	  (frame (and win (window-frame win))))
-    (if (frame-live-p frame)
-      (make-frame-invisible frame))))
+    ;; depending on whether we showing sauron in a window or in a separate frame
+    (if (and (frame-live-p frame)
+	  (eq win (frame-root-window frame)))
+      (make-frame-invisible frame)
+      (delete-window win))))
 
+
+(defvar sr-sauron-visible nil
+  "*internal* whether Sauron is currently visible.")
+
+(defun sauron-toggle-hide-show ()
+  "Toggle between showing/hiding the Sauron window or frame."
+  (interactive)
+  (if sr-sauron-visible
+    (sr-hide)
+    (progn
+      (sauron-start)
+      (if sauron-separate-frame
+	(sr-show-in-separate-frame)
+	(sr-show-embedded)))))
 
 (defun sauron-clear ()
   "Clear the sauron buffer."
