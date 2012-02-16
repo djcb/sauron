@@ -92,15 +92,18 @@ The following events are erc-track
 
 (defun sr-erc-JOIN-hook-func (proc parsed)
   "JOIN hook function."
-  (sr-erc-hook-func proc parsed 'join))
+  (sr-erc-hook-func proc parsed 'join)
+  nil)
 
 (defun sr-erc-QUIT-hook-func (proc parsed)
   "QUIT hook function."
-  (sr-erc-hook-func proc parsed 'quit))
+  (sr-erc-hook-func proc parsed 'quit)
+  nil)
 
 (defun sr-erc-PART-hook-func (proc parsed)
   "PART hook function."
-  (sr-erc-hook-func proc parsed 'part))
+  (sr-erc-hook-func proc parsed 'part)
+  nil)
 
 (defun sr-erc-msg-clean (msg)
   "Clean IRC escaped stuff from messages."
@@ -131,7 +134,7 @@ The following events are erc-track
 	  (propertize " says " 'face 'sauron-highlight1-face)
 	  msg)
 	;; FIXME: assumes we open separate window
-	(lexical-let* ((target-mark target) 
+	(lexical-let* ((target-mark target)
 			(target-buf (if for-me sender channel)))
 	  (lambda ()
 	    (sauron-switch-to-marker-or-buffer (or target-mark target-buf))))
@@ -139,7 +142,8 @@ The following events are erc-track
 	   :sender ,sender
 	   :me     ,me
 	   :target ,target
-	   :msg    ,msg))))
+	   :msg    ,msg)))
+  nil)
 
 (provide 'sauron-erc)
 
