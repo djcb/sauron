@@ -232,9 +232,7 @@ e.g. when using ERC")
     (setq
       sr-running-p t
       sr-nick-event-hash (make-hash-table :size 100 :test 'equal))
-    (if sauron-separate-frame
-      (sr-show-in-separate-frame)
-      (sr-show-embedded))
+    (sr-show)
     (sauron-add-event 'sauron 1 "sauron has started")))
 
 (defun sauron-stop ()
@@ -330,9 +328,9 @@ For debugging purposes."
 (defun sr-scroll-to-bottom ()
   "Scroll to the bottom of the sauron frame."
   (dolist (win (get-buffer-window-list sr-buffer nil t))
-    (select-window win)
-    (goto-char (point-max))
-    (recenter -1)))
+    (with-selected-window win
+      (goto-char (point-max))
+      (recenter -1))))
 
 
 ;; the main work horse functions
@@ -427,6 +425,14 @@ frame/window."
 	(goto-char (if pos pos (point-max)))))))
 
 
+(defun sr-show ()
+  "Show the sauron buffer; if `sauron-separate-frame' is non-nil,
+show it in a separate frame, otherwise, show it embedded in the
+current frame."
+  (if sauron-separate-frame
+    (sr-show-in-separate-frame)
+    (sr-show-embedded)))
+
 (defun sr-show-in-separate-frame ()
   "Show the sauron buffer in a separate frame."
   (setq sr-buffer (sr-create-buffer-maybe))
@@ -446,8 +452,7 @@ frame/window."
 	    (modify-frame-parameters nil frame-params))))
 	(if sauron-hide-mode-line
 	  (setq mode-line-format nil))
-    (set-window-dedicated-p (selected-window) t))
-  (setq sr-sauron-visible t))
+    (set-window-dedicated-p (selected-window) t)))
 
 
 (defun sr-show-embedded ()
@@ -457,13 +462,13 @@ frame/window."
 		  (split-window (frame-root-window) -8 'below))))
     (with-selected-window win
       (switch-to-buffer sr-buffer)
-      (set-window-dedicated-p (selected-window) t)))
-    (setq sr-sauron-visible t))
+      (if sauron-hide-mode-line
+	(setq mode-line-format nil))
+      (set-window-dedicated-p (selected-window) t))))
 
 
 (defun sr-hide ()
   "Hide the sauron buffer, window and/or frame."
-  (setq sr-sauron-visible nil) ;;
   (unless (buffer-live-p sr-buffer)
     (error "No sauron buffer found"))
   (let* ((win (get-buffer-window sr-buffer t))
@@ -474,20 +479,16 @@ frame/window."
       (make-frame-invisible frame)
       (delete-window win))))
 
-
-(defvar sr-sauron-visible nil
-  "*internal* whether Sauron is currently visible.")
-
 (defun sauron-toggle-hide-show ()
   "Toggle between showing/hiding the Sauron window or frame."
   (interactive)
-  (if sr-sauron-visible
+  ;; sr-sauron-visible may be wrong, let's double-check
+  (if (and (buffer-live-p sr-buffer)
+	(window-live-p (get-buffer-window sr-buffer)))
     (sr-hide)
     (progn
       (sauron-start)
-      (if sauron-separate-frame
-	(sr-show-in-separate-frame)
-	(sr-show-embedded)))))
+      (sr-show))))
 
 (defun sauron-clear ()
   "Clear the sauron buffer."
@@ -557,7 +558,8 @@ Obviously, 'alert.el' must be loaded for this to work."
     (error "gnome-osd-client not found"))
   (let ((xmlmsg
 	  (concat ;; weird XML... but this should work
-	    "<message id=\"sauron\" osd_vposition=\"center\" osd_halignment=\"left\" "
+	    "<message id=\"sauron\" osd_vposition=\"center\" "
+	    "osd_halignment=\"left\" "
 	    "osd_fake_translucent_bg=\"on\" "
 	    "hide_timeout=\"" (format "%d" (* 1000 secs)) "\">"
 	    msg

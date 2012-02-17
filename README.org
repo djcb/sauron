@@ -383,8 +383,8 @@
 : ;; in one of the hooks may cause ERC to fail (i.e., the message won't come
 : ;; trough).
 :
-:
 :(global-set-key (kbd "C-c s") 'sauron-toggle-hide-show)
+:(global-set-key (kbd "C-c t") 'sauron-clear)
 :
 :(setq
 :  sauron-max-line-length 120
