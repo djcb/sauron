@@ -5,12 +5,12 @@
 ;; Author: Dirk-Jan C. Binnema <djcb@djcbsoftware.nl>
 ;; Maintainer: Dirk-Jan C. Binnema <djcb@djcbsoftware.nl>
 ;; Created: 06 Dec 2011
-;; Version: 0.3
+;; Version: 0.4
 ;; Keywords:comm,frames
 
 ;; NOTE: odd minor version numbers (0.3, 0.5, ...) are for development, even
-;; numbers (0.2, 0.4, ...) are for releases (ELPA etc.).
-
+;; numbers (0.2, 0.4, ...) are for releases (ELPA etc.). Also note scripts use
+;; the ";; Version" line.
 
 ;; This file is not part of GNU Emacs.
 ;;
