@@ -42,13 +42,16 @@ The following events are erc-track
 (defun sauron-erc-start ()
   "Start watching ERC."
   (if (not (boundp 'erc-version-string))
-    (message "sauron-erc not available")
+    (progn
+      (message "sauron-erc not available")
+      nil)
     (unless sr-erc-running
       (add-hook 'erc-server-PRIVMSG-functions 'sr-erc-PRIVMSG-hook-func)
       (add-hook 'erc-server-JOIN-functions 'sr-erc-JOIN-hook-func)
       (add-hook 'erc-server-PART-functions 'sr-erc-PART-hook-func)
       (add-hook 'erc-server-QUIT-functions 'sr-erc-QUIT-hook-func)
-      (setq sr-erc-running t))))
+      (setq sr-erc-running t))
+    t))
 
 (defun sauron-erc-stop ()
   "Stop watching ERC."
@@ -59,14 +62,14 @@ The following events are erc-track
     (remove-hook 'erc-server-QUIT-functions 'sr-erc-QUIT-hook-func)
     (setq sr-erc-running nil)))
 
+;; note, this function is called from the server-buffer, not from the channel it
+;; refers to
 (defun sr-erc-hook-func (proc parsed event)
   "Hook function, to be called for erc-matched-hook."
   (let* ( (me      (erc-current-nick))
 	  (sender  (car (erc-parse-user (erc-response.sender parsed))))
 	  (channel (car (erc-response.command-args parsed)))
-	  (msg     (erc-response.contents parsed))
-	  (target  (if (buffer-live-p channel)
-		     (with-current-buffer channel (point-marker)))))
+	  (msg     (erc-response.contents parsed)))
     (sauron-add-event
       'erc
       2
@@ -78,32 +81,26 @@ The following events are erc-track
 		   " (" msg ")"))
 	  ('join (concat "joined "
 		   (propertize channel 'face 'sauron-highlight2-face)))))
-      ;; FIXME: assumes we open separate window
-      (when (eq event 'join)
-	(lexical-let ((target target))
-	  (lambda()  (sauron-switch-to-marker-or-buffer target))))
+      (lexical-let ((target channel))
+	(lambda()  (sauron-switch-to-marker-or-buffer target)))
       `( :event    ,event
 	 :sender   ,sender
 	 :me       ,me
 	 :channel  ,channel
-	 :target   ,target
 	 :msg      ,msg))))
 
 
 (defun sr-erc-JOIN-hook-func (proc parsed)
   "JOIN hook function."
-  (sr-erc-hook-func proc parsed 'join)
-  nil)
+  (sr-erc-hook-func proc parsed 'join) nil)
 
 (defun sr-erc-QUIT-hook-func (proc parsed)
   "QUIT hook function."
-  (sr-erc-hook-func proc parsed 'quit)
-  nil)
+  (sr-erc-hook-func proc parsed 'quit) nil)
 
 (defun sr-erc-PART-hook-func (proc parsed)
   "PART hook function."
-  (sr-erc-hook-func proc parsed 'part)
-  nil)
+  (sr-erc-hook-func proc parsed 'part) nil)
 
 (defun sr-erc-msg-clean (msg)
   "Clean IRC escaped stuff from messages."
@@ -124,7 +121,8 @@ The following events are erc-track
 		((string-match me msg)	 3)  ;; I'm mentioned => prio 3
 		(t			 2)))  ;; default
 	    (target (if (buffer-live-p (get-buffer channel))
-		      (with-current-buffer channel (point-marker)))))
+	     	      (with-current-buffer (get-buffer channel)
+			(point-marker)))))
       (sauron-add-event
 	'erc
 	prio
@@ -133,7 +131,6 @@ The following events are erc-track
 	  (propertize channel 'face 'sauron-highlight2-face)
 	  (propertize " says " 'face 'sauron-highlight1-face)
 	  msg)
-	;; FIXME: assumes we open separate window
 	(lexical-let* ((target-mark target)
 			(target-buf (if for-me sender channel)))
 	  (lambda ()
@@ -141,7 +138,7 @@ The following events are erc-track
 	`( :event   privmsg
 	   :sender ,sender
 	   :me     ,me
-	   :target ,target
+	   :channel ,channel
 	   :msg    ,msg)))
   nil)
 
