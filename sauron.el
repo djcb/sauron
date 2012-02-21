@@ -184,6 +184,10 @@ e.g. when using ERC")
   "*internal* hash of nicks and the last time we raised an 'event'
   for that at >= `sauron-min-priority'.")
 
+;; not all versions of emacs define 'fringe-columns
+(unless (fboundp 'fringe-columns)
+  (defun fringe-columns () 0))
+
 (defun sr-set-header-line ()
   "Set the header line for the sauron buffer."
   (setq header-line-format
@@ -221,19 +225,22 @@ e.g. when using ERC")
   "Start sauron."
   (interactive)
   (unless sr-running-p
-    (dolist (module sauron-modules)
-      (require module)
-      (let* ((start-func-name (concat (symbol-name module) "-start"))
-	      (start-func (intern-soft start-func-name)))
-	(if start-func
-	  (funcall start-func)
-	  (error "%s not defined" start-func-name))))
-    (message "Sauron has started")
-    (setq
-      sr-running-p t
-      sr-nick-event-hash (make-hash-table :size 100 :test 'equal))
-    (sr-show)
-    (sauron-add-event 'sauron 1 "sauron has started")))
+    (let ((started))
+      (dolist (module sauron-modules)
+	(require module)
+	(let* ( (name (symbol-name module))
+		(start-func-name (concat name "-start"))
+		(start-func (intern-soft start-func-name)))
+	  (if start-func
+	    (when (funcall start-func)
+	      (add-to-list 'started name t))
+	    (error "%s not defined" start-func-name))))
+      (message "Sauron has started")
+      (setq sr-running-p t
+	    sr-nick-event-hash (make-hash-table :size 100 :test 'equal))
+      (sr-show)
+      (sauron-add-event 'sauron 3
+	(concat "sauron started: " (mapconcat 'identity started ", "))))))
 
 (defun sauron-stop ()
   "Stop sauron."
