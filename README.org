@@ -341,7 +341,8 @@
 
    - create "sauron-foo.el", and make sure it's in the load-path
    - sauron-foo should implement at least:
-     + ~sauron-foo-start~ to start the module
+     + ~sauron-foo-start~ to start the module; this function should return ~t~
+       if startup is successful, ~nil~ otherwise
      + ~sauron-foo-stop~ to stop the module / cleanup etc.
    - add sauron-foo.el with =(provide 'sauron-foo)=
    - now, add ~sauron-foo~ to your ~sauron-modules~
