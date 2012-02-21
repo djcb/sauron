@@ -461,12 +461,20 @@ current frame."
 	  (setq mode-line-format nil))
     (set-window-dedicated-p (selected-window) t)))
 
+(defun sr-split-window-below (new-win-size)
+  "Split the window, return the new window below. We need this
+function because emacs 23 does not support the negative size
+argument to split-window."
+  (split-window
+    (frame-root-window)
+    (- (window-height (frame-root-window)) new-win-size)))
+
 
 (defun sr-show-embedded ()
   "Show the sauron buffer embedded in the current frame."
   (setq sr-buffer (sr-create-buffer-maybe))
   (let* ((win (or (get-buffer-window sr-buffer)
-		  (split-window (frame-root-window) -8 'below))))
+		(sr-split-window-below 8))))
     (with-selected-window win
       (switch-to-buffer sr-buffer)
       (if sauron-hide-mode-line
