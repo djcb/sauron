@@ -98,14 +98,19 @@ and thus send messages to sauron, even when not in the session.")
     (insert (getenv "DBUS_SESSION_BUS_ADDRESS"))))
 
 (defun sauron-dbus-start ()
-  "Start listening for sauron dbus messages."
+  "Start listening for sauron dbus message; if this is succesful
+return t, otherwise, return nil."
   (if (not (boundp 'dbus-path-emacs))
-    (message "sauron-dbus not available")
-    (unless sr-dbus-running
-      (sr-register-methods)
-      (when sauron-dbus-cookie
-	(sr-dbus-drop-cookie))
-      (setq sr-dbus-running t))))
+    (progn
+      (message "sauron-dbus: not available")
+      nil)
+    (ignore-errors 
+      (when (not sr-dbus-running)
+	(sr-register-methods)
+	(when sauron-dbus-cookie
+	  (sr-dbus-drop-cookie))
+	(setq sr-dbus-running t))
+      t)))
 
 (defun sauron-dbus-stop ()
   "Stop listening for dbus messages."
