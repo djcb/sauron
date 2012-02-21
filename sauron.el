@@ -186,7 +186,7 @@ e.g. when using ERC")
 
 ;; not all versions of emacs define 'fringe-columns
 (unless (fboundp 'fringe-columns)
-  (defun fringe-columns () 0))
+  (defun fringe-columns (dummy1 &optional dummy2) 0))
 
 (defun sr-set-header-line ()
   "Set the header line for the sauron buffer."
