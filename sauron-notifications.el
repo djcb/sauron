@@ -23,11 +23,11 @@
 ;;  https://github.com/djcb/sauron/blob/master/README.org
 
 ;;; Code:
-(require 'notifications nil 'noerror)
-(eval-when-compile (require 'cl))
 
 ;; this tracks the D-Bus notifications module that ships with Emacs 24
-
+;; when requiring it, it tries to connect to d-bus. so let's check first.
+(ignore-errors (require 'notifications nil 'noerror))
+  
 (defvar sauron-notifications-urgency-to-priority-plist
   '(:low 3 :normal 4 :critical 5 :otherwise 2)
   "A map from the :urgency parameter in `notifications-notify' to
@@ -46,14 +46,17 @@ urgency (notifications)."
 (defun sauron-notifications-start ()
   "Start tracking notifications."
   (if (not (fboundp 'notifications-notify))
-    (message "sauron-notifications not available")
+    (progn
+      (message "sauron-notifications: not available")
+      nil)
     (progn ;; activate the advice
       (ad-enable-advice 'notifications-notify 'after 'sr-notifications-hook)
-      (ad-activate 'notifications-notify))))
+      (ad-activate 'notifications-notify)
+      t)))
 
 (defun sauron-notifications-stop ()
   "Stop tracking notifications."
-  (when (boundp 'notifications-notify)
+  (when (fboundp 'notifications-notify)
     (progn ;; activate the advice
       (ad-disable-advice 'notifications-notify 'after 'sr-notifications-hook)
       (ad-deactivate 'notifications-notify))))
