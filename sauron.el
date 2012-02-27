@@ -221,7 +221,7 @@ e.g. when using ERC")
   "*internal* Whether sauron is running.")
 
 ;;;###autoload
-(defun sauron-start ()
+(defun sauron-start (&optional background)
   "Start sauron."
   (interactive)
   (unless sr-running-p
@@ -238,7 +238,8 @@ e.g. when using ERC")
       (message "Sauron has started")
       (setq sr-running-p t
 	    sr-nick-event-hash (make-hash-table :size 100 :test 'equal))
-      (sr-show)
+      (unless background
+        (sr-show))
       (sauron-add-event 'sauron 3
 	(concat "sauron started: " (mapconcat 'identity started ", "))))))
 
