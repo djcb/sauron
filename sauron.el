@@ -142,7 +142,7 @@ PROPS is a backend-specific plist.")
   "Face to highlight certain things (1) - for use in backends.")
 
 (defface sauron-highlight2-face
-  '((t :inherit font-lock-string-face))
+  '((t :inherit font-lock-string-face :italic t))
   "Face to highlight certain things (2) - for use in backends.")
 
 (defface sauron-highlight3-face

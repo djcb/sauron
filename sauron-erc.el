@@ -129,7 +129,7 @@ The following events are erc-track
 	(concat
 	  (propertize sender 'face 'sauron-highlight1-face) "@"
 	  (propertize channel 'face 'sauron-highlight2-face)
-	  (propertize " says " 'face 'sauron-highlight1-face)
+	  (propertize ": " 'face 'sauron-highlight1-face)
 	  msg)
 	(lexical-let* ((target-mark target)
 			(target-buf (if for-me sender channel)))
