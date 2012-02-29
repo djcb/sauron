@@ -221,8 +221,9 @@ e.g. when using ERC")
   "*internal* Whether sauron is running.")
 
 ;;;###autoload
-(defun sauron-start ()
-  "Start sauron."
+(defun sauron-start (&optional hidden)
+  "Start sauron. If the optional parameter HIDDEN is non-nil,
+don't show the sauron window."
   (interactive)
   (unless sr-running-p
     (let ((started))
@@ -238,9 +239,17 @@ e.g. when using ERC")
       (message "Sauron has started")
       (setq sr-running-p t
 	    sr-nick-event-hash (make-hash-table :size 100 :test 'equal))
-      (sr-show)
+      (unless hidden
+	(sr-show))
       (sauron-add-event 'sauron 3
 	(concat "sauron started: " (mapconcat 'identity started ", "))))))
+
+;;;###autoload
+(defun sauron-start-hidden ()
+  "Start sauron, but don't show the window."
+  (interactive)
+  (sauron-start t))
+
 
 (defun sauron-stop ()
   "Stop sauron."
@@ -495,7 +504,8 @@ argument to split-window."
       (delete-window win))))
 
 (defun sauron-toggle-hide-show ()
-  "Toggle between showing/hiding the Sauron window or frame."
+  "Toggle between showing/hiding the Sauron window or frame, and
+start sauron if it weren't so already."
   (interactive)
   ;; sr-sauron-visible may be wrong, let's double-check
   (if (and (buffer-live-p sr-buffer)
