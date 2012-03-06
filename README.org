@@ -299,6 +299,9 @@
 :    string:Transmission uint32:3 string:"Torrent completed: $TR_TORRENT_NAME"
 #+end_src
 
+    You also need to enable the web client support in Transmission - it's in the
+    'Web' tab of the preferences dialog.
+    
     Note, if you start transmission before you start your session, see `Using D-Bus
     outside your session'.
 
