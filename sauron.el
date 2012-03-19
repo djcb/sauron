@@ -120,42 +120,56 @@ PROPS is a backend-specific plist.")
 
 
 ;;  faces; re-using the font-lock stuff...
+(defgroup sauron-faces nil
+  "Faces for sauron."
+  :group 'local
+  :group 'faces)
+
 (defface sauron-timestamp-face
   '((t :inherit font-lock-type-face))
-  "Face for a sauron time stamp.")
+  "Face for a sauron time stamp."
+:group 'sauron-faces)
 
 (defface sauron-message-face
   '((t :inherit font-lock-preprocessor-face))
-  "Face for a sauron event message.")
+  "Face for a sauron event message."
+  :group 'sauron-faces)
 
 (defface sauron-origin-face
   '((t :inherit font-lock-variable-name-face))
-  "Face for a sauron event origin.")
+  "Face for a sauron event origin."
+  :group 'sauron-faces)
 
 (defface sauron-priority-face
   '((t :inherit font-lock-operator))
-  "Face for a sauron event priority.")
+  "Face for a sauron event priority."
+  :group 'sauron-faces)
 
 ;; these highlight faces are for use in backends
 (defface sauron-highlight1-face
   '((t :inherit font-lock-pseudo-keyword-face))
-  "Face to highlight certain things (1) - for use in backends.")
+  "Face to highlight certain things (1) - for use in backends."
+  :group 'sauron-faces)
 
 (defface sauron-highlight2-face
   '((t :inherit font-lock-string-face :italic t))
-  "Face to highlight certain things (2) - for use in backends.")
+  "Face to highlight certain things (2) - for use in backends."
+  :group 'sauron-faces)
 
 (defface sauron-highlight3-face
   '((t :inherit font-lock-constant-face))
-  "Face to highlight certain things (3) - for use in backends..")
+  "Face to highlight certain things (3) - for use in backends.."
+  :group 'sauron-faces)
 
 (defface sauron-header-face
   '((t :inherit font-lock-function-name-face :bold t))
-  "Face for the header line.")
+  "Face for the header line."
+  :group 'sauron-faces)
 
 (defface sauron-event-handled-face
   '((t :strike-through t))
-  "Face for a handled event.")
+  "Face for a handled event."
+:group 'sauron-faces)
 
 ;;(setq sauron-mode-map nil)
 (defvar sauron-mode-map
@@ -212,7 +226,7 @@ e.g. when using ERC")
 
 \\{sauron-mode-map}."
   (setq
-    truncate-lines t
+   truncate-lines t
     buffer-read-only t
     overwrite-mode 'overwrite-mode-binary)
   (sr-set-header-line))
@@ -341,6 +355,9 @@ For debugging purposes."
 	  str)))
     sauron-column-alist " "))
 
+(defvar sr-buffer nil
+  "*internal* The sauron buffer.")
+
 (defun sr-scroll-to-bottom ()
   "Scroll to the bottom of the sauron frame."
   (dolist (win (get-buffer-window-list sr-buffer nil t))
@@ -349,7 +366,7 @@ For debugging purposes."
       (recenter -1))))
 
 
-;; the main work horse functions
+;; the main work horse function
 (defun sauron-add-event (origin prio msg &optional func props)
   "Add a new event to the Sauron log with:
 ORIGIN the source of the event (e.g., 'erc or 'dbus or 'org)

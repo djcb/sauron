@@ -15,6 +15,7 @@
 ## Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 
 VERSION=$(shell grep "^;; Version:" sauron.el  | sed 's/^[^0-9]*//')
+EMACS=emacs
 
 FILES=	sauron.el		\
 	sauron-dbus.el		\
@@ -37,5 +38,19 @@ sauron-$(VERSION).tar: $(ELPA_FILES)
 sauron-pkg.el: sauron-pkg.el.in sauron.el
 	sed -e s/@VERSION@/$(VERSION)/ < $< > $@
 
+
+ELS = $(shell ls -1 *.el)
+ELCS = $(ELS:.el=.elc)
+
+
+.el.elc:
+	$(EMACS) -batch -L . \
+		-eval "(setq max-lisp-eval-depth 1500 max-specpdl-size 3000)" \
+		-eval "(mapc (lambda (dir) (add-to-list 'load-path dir)) (parse-colon-path (getenv \"LOAD_PATH\")))" \
+		-f batch-byte-compile $*.el
+
+# i don't actually care much about byte-compiling, except for debugging...
+bytecompile: $(ELCS)
+
 clean:
-	rm -rf sauron-pkg.el *.tar *.gz sauron-$(VERSION)
+	rm -rf sauron-pkg.el *.tar *.gz sauron-$(VERSION) $(ELCS)
