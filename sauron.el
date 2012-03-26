@@ -5,7 +5,7 @@
 ;; Author: Dirk-Jan C. Binnema <djcb@djcbsoftware.nl>
 ;; Maintainer: Dirk-Jan C. Binnema <djcb@djcbsoftware.nl>
 ;; Created: 06 Dec 2011
-;; Version: 0.6
+;; Version: 0.8
 ;; Keywords:comm,frames
 
 ;; NOTE: odd minor version numbers (0.3, 0.5, ...) are for development, even
@@ -328,10 +328,10 @@ Returns the new priority."
   "Execute BODY; if sauron-debug is nil, do so in a
 `ignore-errors'-block, otherwise run with without such a block.
 For debugging purposes."
-  (if sauron-debug
-    `(progn ,@body)
-    (declare (debug t) (indent 0))
-    `(condition-case nil (progn ,@body) (error nil))))
+  `(if sauron-debug
+     (progn ,@body)
+     (declare (debug t) (indent 0))
+     (condition-case nil (progn ,@body) (error nil))))
 
 
 (defun sr-event-line (origin prio msg)
@@ -406,7 +406,7 @@ PROPS an origin-specific property list that will be passed to the hook funcs."
 	    (line (replace-regexp-in-string "\n" " " line))
 	    (line (if sauron-max-line-length
 		      (truncate-string-to-width
-		       line sauron-max-line-length 0 nil t)
+			line sauron-max-line-length 0 nil t)
 		    line))
 	    (line (concat (propertize line 'callback func) "\n"))
 	    (inhibit-read-only t))
@@ -470,7 +470,7 @@ current frame."
   "Show the sauron buffer in a separate frame."
   (setq sr-buffer (sr-create-buffer-maybe))
   (let* ((win (get-buffer-window sr-buffer))
-	 (frame (and win (window-frame frame))))
+	  (frame (and win (window-frame win))))
     (if (and frame win)
       (progn
 	(select-window win)
@@ -570,10 +570,11 @@ alert.el (https://github.com/jwiegley/alert). You can use it like:
   (add-hook 'sauron-event-added-functions 'sauron-alert-el-adapter)
 Obviously, 'alert.el' must be loaded for this to work."
   ;; sauron priorities [0..5] mapping alert severities
-  (let ((sev (nth prio '(trivial trivial low normal moderate high urgent)))
-	 (cat origin)   ;; origins map to alert categories
-	 (title (format "Alert from %S" origin)))
-    (alert msg :severity sev :title title :category cat)))
+  (when (fboundp 'alert)
+    (let ((sev (nth prio '(trivial trivial low normal moderate high urgent)))
+	   (cat origin)   ;; origins map to alert categories
+	   (title (format "Alert from %S" origin)))
+      (alert msg :severity sev :title title :category cat))))
 
 
 
