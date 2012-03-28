@@ -194,6 +194,12 @@ e.g. when using ERC")
      ( message      . "Message"))
   "Alist of the column names.")
 
+(defvar sr-buffer nil
+  "*internal* The sauron buffer")
+
+(defconst sr-buffer-name "*Sauron*"
+  "*internal* Name of the sauron buffer.")
+
 (defvar sr-nick-event-hash nil
   "*internal* hash of nicks and the last time we raised an 'event'
   for that at >= `sauron-min-priority'.")
@@ -545,13 +551,6 @@ start sauron if it weren't so already."
 	(erase-buffer)))
     (message nil)))
 
-
-;; internal settings
-(defvar sr-buffer nil
-  "*internal* The sauron buffer")
-
-(defconst sr-buffer-name "*Sauron*"
-  "*internal* Name of the sauron buffer.")
 
 (defun sr-create-buffer-maybe (name)
   "Create the sauron buffer of NAME, if it does not yet exist. Return the
