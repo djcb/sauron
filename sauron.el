@@ -396,20 +396,21 @@ PROPS an origin-specific property list that will be passed to the hook funcs."
   ;;  (message "new prio:%S msg:%S" prio msg)
   ;; we allow this event only if it's prio >= `sauron-min-priority' and
   ;; running the `sauron-event-block-functions' hook evaluates to nil.
-  (when (and (>= prio sauron-min-priority)
-	  (null (sr-ignore-errors-maybe ;; ignore errors unless we're debugging
-		  (run-hook-with-args-until-success
-		    'sauron-event-block-function origin prio msg props))))
-    (let* ((line (sr-event-line origin prio msg))
-	    ;; add the callback as a text property, remove any embedded newlines,
-	    ;; truncate if necessary append a newline
-	    (line (replace-regexp-in-string "\n" " " line))
-	    (line (if sauron-max-line-length
-		      (truncate-string-to-width
-			line sauron-max-line-length 0 nil t)
-		    line))
-	    (line (concat (propertize line 'callback func) "\n"))
-	    (inhibit-read-only t))
+  (let* ((line (sr-event-line origin prio msg))
+	 ;; add the callback as a text property, remove any embedded newlines,
+	 ;; truncate if necessary append a newline
+	 (line (replace-regexp-in-string "\n" " " line))
+	 (line (if sauron-max-line-length
+		   (truncate-string-to-width
+		    line sauron-max-line-length 0 nil t)
+		 line))
+	 (line (concat (propertize line 'callback func) "\n"))
+	 (inhibit-read-only t))
+    (when (and (>= prio sauron-min-priority)
+	       (null (sr-ignore-errors-maybe
+		      ;; ignore errors unless we're debugging
+		      (run-hook-with-args-until-success
+		       'sauron-event-block-function origin prio msg props))))
       (sr-create-buffer-maybe) ;; create buffer if it did not exist yet
       (with-current-buffer sr-buffer
 	(goto-char (point-max))
