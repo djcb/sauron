@@ -89,6 +89,11 @@ nick. Must be < 65536")
   "Maximum length of messages in the log (longer messages will be
   truncated. If set to nil, there is no maximum.")
 
+(defvar sauron-log-buffer-max-lines 1000
+  "Maximum number of messages to store in the sauron log buffer.
+Messages are removed from the buffer when the total number
+exceeds this number.")
+
 (defvar sauron-sticky-frame nil
   "If t, show the sauron frame on every (virtual) desktop.")
 
@@ -199,6 +204,12 @@ e.g. when using ERC")
 
 (defconst sr-buffer-name "*Sauron*"
   "*internal* Name of the sauron buffer.")
+
+(defvar sr-log-buffer nil
+  "*internal* The sauron log buffer")
+
+(defconst sr-log-buffer-name " *Sauron Log*"
+  "*internal* Name of the sauron log buffer.")
 
 (defvar sr-nick-event-hash nil
   "*internal* hash of nicks and the last time we raised an 'event'
@@ -412,6 +423,11 @@ PROPS an origin-specific property list that will be passed to the hook funcs."
 		 line))
 	 (line (concat (propertize line 'callback func) "\n"))
 	 (inhibit-read-only t))
+    (with-current-buffer
+        (setq sr-log-buffer (sr-create-buffer-maybe sr-log-buffer-name))
+      (goto-char (point-max))
+      (insert line))
+    (sr-clear-log-buffer-maybe)
     (when (and (>= prio sauron-min-priority)
 	       (null (sr-ignore-errors-maybe
 		      ;; ignore errors unless we're debugging
@@ -560,6 +576,17 @@ sauron buffer."
       (unless (equal major-mode 'sauron-mode)
 	(sauron-mode)))
     buffer))
+
+
+(defun sr-clear-log-buffer-maybe ()
+  (when sr-log-buffer
+    (with-current-buffer sr-log-buffer
+      (save-excursion
+        (let ((lines (count-lines (point-min) (point-max)))
+              (inhibit-read-only t))
+          (when (> lines sauron-log-buffer-max-lines)
+            (forward-line (- sauron-log-buffer-max-lines lines))
+            (delete-region (point-min) (point))))))))
 
 
 
