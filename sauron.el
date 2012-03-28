@@ -411,7 +411,8 @@ PROPS an origin-specific property list that will be passed to the hook funcs."
 		      ;; ignore errors unless we're debugging
 		      (run-hook-with-args-until-success
 		       'sauron-event-block-function origin prio msg props))))
-      (sr-create-buffer-maybe) ;; create buffer if it did not exist yet
+      ;; create buffer if it did not exist yet
+      (setq sr-buffer (sr-create-buffer-maybe sr-buffer-name))
       (with-current-buffer sr-buffer
 	(goto-char (point-max))
 	(insert line)
@@ -469,7 +470,7 @@ current frame."
 
 (defun sr-show-in-separate-frame ()
   "Show the sauron buffer in a separate frame."
-  (setq sr-buffer (sr-create-buffer-maybe))
+  (setq sr-buffer (sr-create-buffer-maybe sr-buffer-name))
   (let* ((win (get-buffer-window sr-buffer))
 	  (frame (and win (window-frame win))))
     (if (and frame win)
@@ -499,7 +500,7 @@ argument to split-window."
 
 (defun sr-show-embedded ()
   "Show the sauron buffer embedded in the current frame."
-  (setq sr-buffer (sr-create-buffer-maybe))
+  (setq sr-buffer (sr-create-buffer-maybe sr-buffer-name))
   (let* ((win (or (get-buffer-window sr-buffer)
 		(sr-split-window-below 8))))
     (with-selected-window win
@@ -552,14 +553,14 @@ start sauron if it weren't so already."
 (defconst sr-buffer-name "*Sauron*"
   "*internal* Name of the sauron buffer.")
 
-(defun sr-create-buffer-maybe ()
-  "Create the sauron buffer, if it does not yet exist. Return the
+(defun sr-create-buffer-maybe (name)
+  "Create the sauron buffer of NAME, if it does not yet exist. Return the
 sauron buffer."
-  (unless (and sr-buffer (buffer-live-p sr-buffer))
-    (setq sr-buffer (get-buffer-create sr-buffer-name))
-    (with-current-buffer sr-buffer
-      (sauron-mode)))
-  sr-buffer)
+  (let ((buffer (get-buffer-create name)))
+    (with-current-buffer buffer
+      (unless (equal major-mode 'sauron-mode)
+	(sauron-mode)))
+    buffer))
 
 
 
