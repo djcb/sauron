@@ -89,6 +89,11 @@ nick. Must be < 65536")
   "Maximum length of messages in the log (longer messages will be
   truncated. If set to nil, there is no maximum.")
 
+(defvar sauron-log-buffer-max-lines 1000
+  "Maximum number of messages to store in the sauron log buffer.
+Messages are removed from the buffer when the total number
+exceeds this number.")
+
 (defvar sauron-sticky-frame nil
   "If t, show the sauron frame on every (virtual) desktop.")
 
@@ -193,6 +198,18 @@ e.g. when using ERC")
      ( priority     . "Prio"   )
      ( message      . "Message"))
   "Alist of the column names.")
+
+(defvar sr-buffer nil
+  "*internal* The sauron buffer")
+
+(defconst sr-buffer-name "*Sauron*"
+  "*internal* Name of the sauron buffer.")
+
+(defvar sr-log-buffer nil
+  "*internal* The sauron log buffer")
+
+(defconst sr-log-buffer-name " *Sauron Log*"
+  "*internal* Name of the sauron log buffer.")
 
 (defvar sr-nick-event-hash nil
   "*internal* hash of nicks and the last time we raised an 'event'
@@ -396,21 +413,28 @@ PROPS an origin-specific property list that will be passed to the hook funcs."
   ;;  (message "new prio:%S msg:%S" prio msg)
   ;; we allow this event only if it's prio >= `sauron-min-priority' and
   ;; running the `sauron-event-block-functions' hook evaluates to nil.
-  (when (and (>= prio sauron-min-priority)
-	  (null (sr-ignore-errors-maybe ;; ignore errors unless we're debugging
-		  (run-hook-with-args-until-success
-		    'sauron-event-block-function origin prio msg props))))
-    (let* ((line (sr-event-line origin prio msg))
-	    ;; add the callback as a text property, remove any embedded newlines,
-	    ;; truncate if necessary append a newline
-	    (line (replace-regexp-in-string "\n" " " line))
-	    (line (if sauron-max-line-length
-		      (truncate-string-to-width
-			line sauron-max-line-length 0 nil t)
-		    line))
-	    (line (concat (propertize line 'callback func) "\n"))
-	    (inhibit-read-only t))
-      (sr-create-buffer-maybe) ;; create buffer if it did not exist yet
+  (let* ((line (sr-event-line origin prio msg))
+	 ;; add the callback as a text property, remove any embedded newlines,
+	 ;; truncate if necessary append a newline
+	 (line (replace-regexp-in-string "\n" " " line))
+	 (line (if sauron-max-line-length
+		   (truncate-string-to-width
+		    line sauron-max-line-length 0 nil t)
+		 line))
+	 (line (concat (propertize line 'callback func) "\n"))
+	 (inhibit-read-only t))
+    (with-current-buffer
+        (setq sr-log-buffer (sr-create-buffer-maybe sr-log-buffer-name))
+      (goto-char (point-max))
+      (insert line))
+    (sr-clear-log-buffer-maybe)
+    (when (and (>= prio sauron-min-priority)
+	       (null (sr-ignore-errors-maybe
+		      ;; ignore errors unless we're debugging
+		      (run-hook-with-args-until-success
+		       'sauron-event-block-function origin prio msg props))))
+      ;; create buffer if it did not exist yet
+      (setq sr-buffer (sr-create-buffer-maybe sr-buffer-name))
       (with-current-buffer sr-buffer
 	(goto-char (point-max))
 	(insert line)
@@ -468,7 +492,7 @@ current frame."
 
 (defun sr-show-in-separate-frame ()
   "Show the sauron buffer in a separate frame."
-  (setq sr-buffer (sr-create-buffer-maybe))
+  (setq sr-buffer (sr-create-buffer-maybe sr-buffer-name))
   (let* ((win (get-buffer-window sr-buffer))
 	  (frame (and win (window-frame win))))
     (if (and frame win)
@@ -498,7 +522,7 @@ argument to split-window."
 
 (defun sr-show-embedded ()
   "Show the sauron buffer embedded in the current frame."
-  (setq sr-buffer (sr-create-buffer-maybe))
+  (setq sr-buffer (sr-create-buffer-maybe sr-buffer-name))
   (let* ((win (or (get-buffer-window sr-buffer)
 		(sr-split-window-below 8))))
     (with-selected-window win
@@ -544,21 +568,25 @@ start sauron if it weren't so already."
     (message nil)))
 
 
-;; internal settings
-(defvar sr-buffer nil
-  "*internal* The sauron buffer")
-
-(defconst sr-buffer-name "*Sauron*"
-  "*internal* Name of the sauron buffer.")
-
-(defun sr-create-buffer-maybe ()
-  "Create the sauron buffer, if it does not yet exist. Return the
+(defun sr-create-buffer-maybe (name)
+  "Create the sauron buffer of NAME, if it does not yet exist. Return the
 sauron buffer."
-  (unless (and sr-buffer (buffer-live-p sr-buffer))
-    (setq sr-buffer (get-buffer-create sr-buffer-name))
-    (with-current-buffer sr-buffer
-      (sauron-mode)))
-  sr-buffer)
+  (let ((buffer (get-buffer-create name)))
+    (with-current-buffer buffer
+      (unless (equal major-mode 'sauron-mode)
+	(sauron-mode)))
+    buffer))
+
+
+(defun sr-clear-log-buffer-maybe ()
+  (when sr-log-buffer
+    (with-current-buffer sr-log-buffer
+      (save-excursion
+        (let ((lines (count-lines (point-min) (point-max)))
+              (inhibit-read-only t))
+          (when (> lines sauron-log-buffer-max-lines)
+            (forward-line (- sauron-log-buffer-max-lines lines))
+            (delete-region (point-min) (point))))))))
 
 
 
