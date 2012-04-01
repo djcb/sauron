@@ -206,6 +206,14 @@
 #+end_example
 
 
+*** Seeing /all/ events
+
+    Sometimes, you may want to see /all/ events instead of filtering them, for
+    example for debugging purposes. For this, there is the variable
+    =sauron-log-events=. If you set it to =t=, /all/ events will be shown in a
+    buffer names =*Sauron Log*=. This buffer shows up to
+    =sauron-log-buffer-max-lines= (default: 1000) lines of the last events.
+
 ** connecting to alert.el
 
    John Wiegley's [[https://github.com/jwiegley/alert][alert.el]] has a bit of overlap with sauron; however, I've added
@@ -301,7 +309,7 @@
 
     You also need to enable the web client support in Transmission - it's in the
     'Web' tab of the preferences dialog.
-    
+
     Note, if you start transmission before you start your session, see `Using D-Bus
     outside your session'.
 

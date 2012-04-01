@@ -89,6 +89,10 @@ nick. Must be < 65536")
   "Maximum length of messages in the log (longer messages will be
   truncated. If set to nil, there is no maximum.")
 
+(defvar sauron-log-events nil
+  "Whether to show write all Sauron events (even the filtered ones)
+to the sauron log buffer.")
+
 (defvar sauron-log-buffer-max-lines 1000
   "Maximum number of messages to store in the sauron log buffer.
 Messages are removed from the buffer when the total number
@@ -206,9 +210,9 @@ e.g. when using ERC")
   "*internal* Name of the sauron buffer.")
 
 (defvar sr-log-buffer nil
-  "*internal* The sauron log buffer")
+  "*internal* The sauron log buffer.")
 
-(defconst sr-log-buffer-name " *Sauron Log*"
+(defconst sr-log-buffer-name "*Sauron Log*"
   "*internal* Name of the sauron log buffer.")
 
 (defvar sr-nick-event-hash nil
@@ -382,6 +386,15 @@ For debugging purposes."
       (goto-char (point-max))
       (recenter -1))))
 
+(defun sr-add-to-log (line)
+  "Add LINE to the Sauron log buffer."
+  (unless (buffer-live-p sr-log-buffer)
+    (setq sr-log-buffer (sr-create-buffer-maybe sr-log-buffer-name)))
+  (with-current-buffer sr-log-buffer
+    (goto-char (point-max))
+    (insert line)
+    (sr-clear-log-buffer-maybe)))
+
 
 ;; the main work horse function
 (defun sauron-add-event (origin prio msg &optional func props)
@@ -423,11 +436,10 @@ PROPS an origin-specific property list that will be passed to the hook funcs."
 		 line))
 	 (line (concat (propertize line 'callback func) "\n"))
 	 (inhibit-read-only t))
-    (with-current-buffer
-        (setq sr-log-buffer (sr-create-buffer-maybe sr-log-buffer-name))
-      (goto-char (point-max))
-      (insert line))
-    (sr-clear-log-buffer-maybe)
+
+    ;; when logging is enabled, write the line to the sauron log as well
+    (when sauron-log-events (sr-add-to-log line))
+
     (when (and (>= prio sauron-min-priority)
 	       (null (sr-ignore-errors-maybe
 		      ;; ignore errors unless we're debugging
@@ -579,11 +591,12 @@ sauron buffer."
 
 
 (defun sr-clear-log-buffer-maybe ()
+  "Clear the sauon log "
   (when sr-log-buffer
     (with-current-buffer sr-log-buffer
       (save-excursion
         (let ((lines (count-lines (point-min) (point-max)))
-              (inhibit-read-only t))
+	       (inhibit-read-only t))
           (when (> lines sauron-log-buffer-max-lines)
             (forward-line (- sauron-log-buffer-max-lines lines))
             (delete-region (point-min) (point))))))))
