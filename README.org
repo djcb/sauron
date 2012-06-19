@@ -272,6 +272,7 @@
 
 #+begin_src sh
 :    dbus-send --session --dest="org.gnu.Emacs"	   \
+:              --type=method_call                  \
 :    "/org/gnu/Emacs/Sauron"                       \
 :    "org.gnu.Emacs.Sauron.AddUrlEvent"            \
 :    string:shell uint32:3 string:"Link: Emacs-Fu" \
@@ -286,6 +287,7 @@
 #+begin_src sh
 :    dbus-send --session          	          \
 :    --dest="org.gnu.Emacs"	                  \
+     --type=method_call                           \
 :     "/org/gnu/Emacs/Sauron"                     \
 :    "org.gnu.Emacs.Sauron.AddMsgEvent"           \
 :    string:shell uint32:3 string:"Hello, world!"
@@ -302,6 +304,7 @@
 #+begin_src sh
 :    dbus-send --session          	          \
 :    --dest="org.gnu.Emacs"	                  \
+:    --type=method_call                           \
 :     "/org/gnu/Emacs/Sauron"                     \
 :    "org.gnu.Emacs.Sauron.AddMsgEvent"           \
 :    string:Transmission uint32:3 string:"Torrent completed: $TR_TORRENT_NAME"
