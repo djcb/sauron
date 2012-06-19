@@ -1,6 +1,6 @@
 ;;; sauron-org.el --- an org-mode (appt) tracking module, part of sauron
 ;;
-;; Copyright (C) 2011 Dirk-Jan C. Binnema
+;; Copyright (C) 2011-2012 Dirk-Jan C. Binnema
 
 ;; This file is not part of GNU Emacs.
 ;;

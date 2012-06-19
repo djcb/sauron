@@ -1,6 +1,6 @@
 ;;; sauron.el --- a frame tracking events inside and outside your emacs buffers
 ;;
-;; Copyright (C) 2011 Dirk-Jan C. Binnema
+;; Copyright (C) 2011-2012 Dirk-Jan C. Binnema
 
 ;; Author: Dirk-Jan C. Binnema <djcb@djcbsoftware.nl>
 ;; Maintainer: Dirk-Jan C. Binnema <djcb@djcbsoftware.nl>
@@ -261,6 +261,8 @@ e.g. when using ERC")
 don't show the sauron window."
   (interactive)
   (unless sr-running-p
+    (setq sr-running-p t
+      sr-nick-event-hash (make-hash-table :size 100 :test 'equal))
     (let ((started))
       (dolist (module sauron-modules)
 	(require module)
@@ -272,8 +274,6 @@ don't show the sauron window."
 	      (add-to-list 'started name t))
 	    (error "%s not defined" start-func-name))))
       (message "Sauron has started")
-      (setq sr-running-p t
-	    sr-nick-event-hash (make-hash-table :size 100 :test 'equal))
       (unless hidden
 	(sr-show))
       (sauron-add-event 'sauron 3
