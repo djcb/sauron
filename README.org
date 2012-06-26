@@ -353,6 +353,15 @@
     =sauron-identica= shows the number of new dents found by =identica-mode= whenever
     there is at least one new dent.
 
+*** jabber
+
+    =sauron-jabber= shows events from =jabber.el=, this includes new messages, info
+    messages, presence alerts and lost connections.
+
+    The info, presence and connection events get priority 2, so by default you won't
+    get to see these. The others get priority 3, so those /should/ be visible by
+    default.
+
 ** adding new modules
 
    It may be interesting to track other modules as well; this shouldn't be too
