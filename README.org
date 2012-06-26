@@ -229,8 +229,8 @@
 
 ** the backend modules
 
-   Currently, four backend modules have been implemented - *ERC*, *org-mode*, *d-bus*
-   and *notifications* (for emacs 24). Hopefully, more will follow.
+   Currently, five backend modules have been implemented - *ERC*, *org-mode*, *d-bus*,
+   *notifications* (for emacs 24) and *identica-mode*. Hopefully, more will follow.
 
 *** erc
 
@@ -347,6 +347,11 @@
     Note, one should be careful when calling `notifications-notify' from
     functions listed in the `sauron-event-added-functions' hook, as to not
     create some infinite recursion.
+
+*** identi.ca
+
+    =sauron-identica= shows the number of new dents found by =identica-mode= whenever
+    there is at least one new dent.
 
 ** adding new modules
 
