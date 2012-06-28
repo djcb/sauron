@@ -20,6 +20,8 @@ EMACS=emacs
 FILES=	sauron.el		\
 	sauron-dbus.el		\
 	sauron-erc.el		\
+	sauron-identica.el	\
+	sauron-jabber.el	\
 	sauron-org.el		\
 	sauron-notifications.el
 
