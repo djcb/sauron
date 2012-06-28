@@ -229,8 +229,9 @@
 
 ** the backend modules
 
-   Currently, five backend modules have been implemented - *ERC*, *org-mode*, *d-bus*,
-   *notifications* (for emacs 24) and *identica-mode*. Hopefully, more will follow.
+   Currently, six backend modules have been implemented - *ERC*, *org-mode*, *d-bus*,
+   *notifications* (for emacs 24), *identica-mode* and *jabber.el*. Hopefully, more will
+   follow.
 
 *** erc
 
