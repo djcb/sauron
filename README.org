@@ -229,7 +229,8 @@
 
 ** the backend modules
 
-   Currently, four backend modules have been implemented - *ERC*, *org-mode*, *d-bus*
+   Currently, five backend modules have been implemented - *ERC*,
+   *org-mode*, *d-bus*, *twittering-mode* 
    and *notifications* (for emacs 24). Hopefully, more will follow.
 
 *** erc
