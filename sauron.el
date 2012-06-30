@@ -38,9 +38,10 @@
 (eval-when-compile (require 'cl))
 
 (defvar sauron-modules
-  '(sauron-erc sauron-dbus sauron-org sauron-notifications)
+  '(sauron-erc sauron-dbus sauron-org sauron-notifications sauron-twittering)
   "List of sauron modules to use. Currently supported are:
-sauron-erc, sauron-org and sauron-dbus.")
+sauron-erc, sauron-org, sauron-dbus, and sauron-twittering.")
+
 
 (defvar sauron-separate-frame t
   "Show sauron in a separate frame; if set to nil (*experimental*),
@@ -186,6 +187,8 @@ PROPS is a backend-specific plist.")
     (define-key map "c"               'sauron-clear)
     (define-key map (kbd "RET")       'sauron-activate-event)
     (define-key map (kbd "<mouse-2>") 'sauron-activate-event)
+    (define-key map (kbd "M-p")       'sauron-activate-event-previous)
+    (define-key map (kbd "M-n")       'sauron-activate-event-next)
     map)
   "Keymap for the sauron buffer.")
 (fset 'sauron-mode-map sauron-mode-map)
@@ -471,6 +474,23 @@ any special faces from the line."
       (funcall callback)
       (message "No callback defined for this line."))))
 
+
+
+(defun sauron-activate-event-previous ()
+  "Move to the previous line, and then activate the event for that line."
+  (interactive)
+  (previous-line)
+  (beginning-of-line)
+  (sauron-activate-event))
+
+
+
+(defun sauron-activate-event-next ()
+  "Move to the next line, and then activate the event for that line."
+  (interactive)
+  (next-line)
+  (beginning-of-line)
+  (sauron-activate-event))
 
 (defun sauron-switch-to-marker-or-buffer (mbn)
   "Switch to MBN (marker-or-buffer-or-name) in another
