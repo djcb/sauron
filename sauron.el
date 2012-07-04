@@ -38,9 +38,11 @@
 (eval-when-compile (require 'cl))
 
 (defvar sauron-modules
-  '(sauron-erc sauron-dbus sauron-org sauron-notifications)
+  '(sauron-erc sauron-dbus sauron-org sauron-notifications
+     sauron-twittering sauron-jabber sauron-identica)
   "List of sauron modules to use. Currently supported are:
-sauron-erc, sauron-org and sauron-dbus.")
+sauron-erc, sauron-org and sauron-dbus, sauron-twittering,
+sauron-jabber, sauron-identica.")
 
 (defvar sauron-separate-frame t
   "Show sauron in a separate frame; if set to nil (*experimental*),
