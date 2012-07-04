@@ -186,6 +186,8 @@ PROPS is a backend-specific plist.")
     (define-key map "c"               'sauron-clear)
     (define-key map (kbd "RET")       'sauron-activate-event)
     (define-key map (kbd "<mouse-2>") 'sauron-activate-event)
+    (define-key map (kbd "<M-up>")    'sauron-activate-event-prev)
+    (define-key map (kbd "<M-down>")  'sauron-activate-event-next)
     map)
   "Keymap for the sauron buffer.")
 (fset 'sauron-mode-map sauron-mode-map)
@@ -194,7 +196,7 @@ PROPS is a backend-specific plist.")
   "Whether to show errors. Unless you're actually debugging, it's
 good to leave this to nil, since when there's some error happening
 in your hook function, this may interfere with normal operation,
-e.g. when using ERC")
+e.g. when using ERC.")
 
 (defconst sr-column-name-alist
   '( ( timestamp    . "Time"   )
@@ -472,6 +474,22 @@ any special faces from the line."
       (message "No callback defined for this line."))))
 
 
+(defun sauron-activate-event-prev (&optional n)
+  "Move to the previous line, and then activate the event for that
+line. Optionally, takes an integer N (prefix argument), to go to
+the Nth previous line."
+  (interactive "P")
+  (forward-line (- (or n 1)))
+  (sauron-activate-event))
+
+(defun sauron-activate-event-next (&optional n)
+  "Move to the previous line, and then activate the event for that
+line. Optionally, takes an integer N (prefix argument), to go to
+the Nth previous line."
+  (interactive "P")
+  (forward-line (or n 1))
+  (sauron-activate-event))
+ 
 (defun sauron-switch-to-marker-or-buffer (mbn)
   "Switch to MBN (marker-or-buffer-or-name) in another
 frame/window."
