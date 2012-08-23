@@ -588,6 +588,13 @@ start sauron if it weren't so already."
       (sauron-start)
       (sr-show))))
 
+(defun sauron-pop-to-buffer ()
+  "Popup sauron buffer."
+  (interactive)
+  (unless (buffer-live-p sr-buffer)
+    (error "No sauron buffer found.  Please start sauron by `sauron-start'."))
+  (pop-to-buffer sr-buffer))
+
 (defun sauron-clear ()
   "Clear the sauron buffer."
   (interactive)
