@@ -190,6 +190,9 @@ PROPS is a backend-specific plist.")
     (define-key map (kbd "<mouse-2>") 'sauron-activate-event)
     (define-key map (kbd "<M-up>")    'sauron-activate-event-prev)
     (define-key map (kbd "<M-down>")  'sauron-activate-event-next)
+    (define-key map "n"               'next-line)
+    (define-key map "p"               'previous-line)
+    (define-key map "q"               'bury-buffer)
     map)
   "Keymap for the sauron buffer.")
 (fset 'sauron-mode-map sauron-mode-map)
@@ -587,6 +590,13 @@ start sauron if it weren't so already."
     (progn
       (sauron-start)
       (sr-show))))
+
+(defun sauron-pop-to-buffer ()
+  "Popup sauron buffer."
+  (interactive)
+  (unless (buffer-live-p sr-buffer)
+    (error "No sauron buffer found.  Please start sauron by `sauron-start'."))
+  (pop-to-buffer sr-buffer))
 
 (defun sauron-clear ()
   "Clear the sauron buffer."
