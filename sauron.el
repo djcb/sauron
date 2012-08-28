@@ -35,7 +35,7 @@
 ;; internal stuff starts with 'sr-'
 
 ;;; Code:
-(eval-when-compile (require 'cl))
+(require 'cl)
 
 (defvar sauron-modules
   '(sauron-erc sauron-dbus sauron-org sauron-notifications
@@ -691,16 +691,17 @@ Obviously, 'alert.el' must be loaded for this to work."
   "Send a notification with TITLE and MSG to the notification
 daemon of D-bus, and show the message for SECS seconds. Return the
 id for the notification."
-  (let ((note-id (random 65535)))
-    (dbus-call-method
-      :session "org.freedesktop.Notifications"
-      "/org/freedesktop/Notifications"
-      "org.freedesktop.Notifications" "Notify"
-      "Sauron"
-      note-id
-      "emacs" title msg
-      '(:array) '(:array :signature "{sv}") ':int32 secs)
-    note-id))
+  (when (require 'dbus nil 'noerror)
+    (let ((note-id (random 65535)))
+      (dbus-call-method
+	:session "org.freedesktop.Notifications"
+	"/org/freedesktop/Notifications"
+	"org.freedesktop.Notifications" "Notify"
+	"Sauron"
+	note-id
+	"emacs" title msg
+	'(:array) '(:array :signature "{sv}") ':int32 secs)
+      note-id)))
 
 (provide 'sauron)
 

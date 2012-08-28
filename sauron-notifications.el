@@ -38,10 +38,10 @@
 urgency (notifications)."
   (plist-get sauron-notifications-urgency-to-priority-plist
     (case urgency
-      (low ':low)
-      (normal ':normal)
-      (critical ':critical)
-      (otherwise ':otherwise))))
+      (low       :low)
+      (normal    :normal)
+      (critical  :critical)
+      (otherwise :otherwise))))
 
 (defun sauron-notifications-start ()
   "Start tracking notifications."

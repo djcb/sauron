@@ -22,9 +22,8 @@
 ;;  https://github.com/djcb/sauron/blob/master/README.org
 
 ;;; Code:
-(eval-when-compile (require 'cl))
-
-(unless (require 'dbus nil 'noerror)) ;; keep errors out if dbus is not there
+(require 'cl)
+(require 'dbus nil 'noerror) ;; keep errors out if dbus is not there
 
 ;; keep the byte-compiler happy, even if dbus isn't there
 (defvar dbus-service-emacs nil)
