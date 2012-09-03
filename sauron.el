@@ -658,14 +658,6 @@ Obviously, 'alert.el' must be loaded for this to work."
     (error "aplay not found"))
   (call-process "aplay" nil 0 nil "-q" "-N" path))
 
-(defun sauron-fx-sox (path)
-  "Play a wav-file at PATH using program sox."
-  (unless (and (file-readable-p path) (file-regular-p path))
-    (error "%s is not a playable file" path))
-  (unless (executable-find "sox")
-    (error "sox not found"))
-  (call-process "sox" nil 0 nil "--volume=9" "-V0" "-q" path "-d"))
-
 (defun sauron-fx-gnome-osd (msg secs)
   "Display MSG on your screen for SECS second... for really important stuff."
   (unless (executable-find "gnome-osd-client")
@@ -680,12 +672,13 @@ Obviously, 'alert.el' must be loaded for this to work."
 	    "</message>")))
     (call-process "gnome-osd-client" nil 0 nil "-f" "--dbus" xmlmsg)))
 
-(defun sauron-fx-zenity (msg)
-  "Pop-up a zenity window with MSG."
-  (unless (executable-find "zenity")
-    (error "zenity not found"))
-  (call-process "zenity" nil 0 nil "--info" "--title=Sauron"
-    (concat "--text=" msg)))
+(defun sauron-fx-mplayer (path)
+  "Play a wav-file at PATH using program mplayer."
+  (unless (and (file-readable-p path) (file-regular-p path))
+     (error "%s is not a playable file" path))
+  (unless (executable-find "mplayer")
+     (error "mplayer not found"))
+  (call-process "mplayer" nil 0 nil "-really-quiet" path))
 
 (defun sauron-fx-notify (title msg secs)
   "Send a notification with TITLE and MSG to the notification
@@ -702,6 +695,21 @@ id for the notification."
 	"emacs" title msg
 	'(:array) '(:array :signature "{sv}") ':int32 secs)
       note-id)))
+
+(defun sauron-fx-sox (path)
+  "Play a wav-file at PATH using program sox."
+  (unless (and (file-readable-p path) (file-regular-p path))
+    (error "%s is not a playable file" path))
+  (unless (executable-find "sox")
+    (error "sox not found"))
+  (call-process "sox" nil 0 nil "--volume=9" "-V0" "-q" path "-d"))
+
+(defun sauron-fx-zenity (msg)
+  "Pop-up a zenity window with MSG."
+  (unless (executable-find "zenity")
+    (error "zenity not found"))
+  (call-process "zenity" nil 0 nil "--info" "--title=Sauron"
+    (concat "--text=" msg)))
 
 (provide 'sauron)
 
