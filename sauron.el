@@ -451,7 +451,7 @@ PROPS an origin-specific property list that will be passed to the hook funcs."
 	       (null (sr-ignore-errors-maybe
 		      ;; ignore errors unless we're debugging
 		      (run-hook-with-args-until-success
-		       'sauron-event-block-function origin prio msg props))))
+		       'sauron-event-block-functions origin prio msg props))))
       ;; create buffer if it did not exist yet
       (setq sr-buffer (sr-create-buffer-maybe sr-buffer-name))
       (with-current-buffer sr-buffer
