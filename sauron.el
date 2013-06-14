@@ -494,7 +494,7 @@ the Nth previous line."
   (interactive "P")
   (forward-line (or n 1))
   (sauron-activate-event))
- 
+
 (defun sauron-switch-to-marker-or-buffer (mbn)
   "Switch to MBN (marker-or-buffer-or-name) in another
 frame/window."
@@ -652,7 +652,7 @@ Obviously, 'alert.el' must be loaded for this to work."
 ;; some convenience function sound/light fx in event hooks
 (defun sauron-fx-aplay (path)
   "Play a wav-file at PATH using program aplay."
-  (unless (and (file-readable-p path) (file-regular-p path))
+  (unless (and (file-readable-p path))
     (error "%s is not a playable file" path))
   (unless (executable-find "aplay")
     (error "aplay not found"))
@@ -674,7 +674,7 @@ Obviously, 'alert.el' must be loaded for this to work."
 
 (defun sauron-fx-mplayer (path)
   "Play a wav-file at PATH using program mplayer."
-  (unless (and (file-readable-p path) (file-regular-p path))
+  (unless (and (file-readable-p path))
      (error "%s is not a playable file" path))
   (unless (executable-find "mplayer")
      (error "mplayer not found"))
