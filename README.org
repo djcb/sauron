@@ -257,7 +257,7 @@
     won't get notified from the same nick for another 60 seconds (by default --
     see =sauron-nick-insensitivity=), so you won't get e.g. sound effects for
     each message in a private conversation.
-
+    
 *** org-mode / appt
 
     For org-mode, sauron adds functionality to =appt-disp-window-function= (but
@@ -367,13 +367,14 @@
 
 *** jabber
 
-    =sauron-jabber= shows events from =jabber.el=, this includes new messages, info
-    messages, presence alerts and lost connections.
+    =sauron-jabber= shows events from =jabber.el=, this includes new
+    messages, info messages, presence alerts and lost connections.
 
-    The info, presence and connection events get priority 2, so by default you won't
-    get to see these. The others get priority 3, so those /should/ be visible by
-    default.
-
+    All these events get priority 2 so by default you won't see
+    these. As with =erc=, change =sauron-watch-patterns= and/or
+    =sauron-watch-nicks= to filter messages that you want to get a
+    higher priority and thus be visible by default.
+    
 ** adding new modules
 
    It may be interesting to track other modules as well; this shouldn't be too

@@ -65,7 +65,7 @@
 (defun sr-jabber-alert-message-func (from buffer text
                                                 proposed-alert)
   (let ((name (jabber-jid-displayname from)))
-    (sauron-add-event 'jabber 3 proposed-alert
+    (sauron-add-event 'jabber 2 proposed-alert
                       `(lambda ()
                          (sauron-switch-to-marker-or-buffer
                           ,(buffer-name buffer))))))
@@ -79,7 +79,7 @@
 
 (defun sr-jabber-alert-muc-func (nick group buffer text
                                             proposed-alert)
-  (sauron-add-event 'jabber 3 proposed-alert
+  (sauron-add-event 'jabber 2 proposed-alert
                     `(lambda ()
                        (sauron-switch-to-marker-or-buffer
                         ,(buffer-name buffer)))))
