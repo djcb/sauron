@@ -5,7 +5,7 @@
 ;; Author: Dirk-Jan C. Binnema <djcb@djcbsoftware.nl>
 ;; Maintainer: Dirk-Jan C. Binnema <djcb@djcbsoftware.nl>
 ;; Created: 06 Dec 2011
-;; Version: 0.9
+;; Version: 0.10
 ;; Keywords:comm,frames
 
 ;; NOTE: odd minor version numbers (0.3, 0.5, ...) are for development, even

@@ -1,8 +1,5 @@
 * sauron
 
-  *WARNING* sauron is in its early stages of development. Okay, now I warned
-  you.
-
 ** what is it?
 
    *sauron* is an emacs mode for keeping track of /events/ happening in the
@@ -16,13 +13,7 @@
    case of IRC (ERC), it will switch you to the buffer (channel) it originated
    from. It's a bit of a generalization of what /tracking mode/ does in ERC (the
    emacs IRC client), and that is in fact how it started.
-
-   For my work, I need to keep track of a bunch of internal ERC (IRC) channels
-   and at the same time not forget to go to meetings, even when I'm
-   concentrating on something else. So, I want something tweakable to provide me
-   with the right balance between obnoxiousness and ignorability. Thus, sauron
-   was born.
-
+ 
    There's an increasing number of hooks and tunables in sauron, which allows
    you to fine-tune the behavior. However, I strive for it to be useful with
    minimal configuration.
@@ -43,14 +34,13 @@
    sauron-stop=.
 
    =sauron-start= will pop-up a new frame (window) which will show events coming
-   from any of its sources (i.e.., ERC, org-mode appointments and over
-   d-bus). You can 'activate' a source by pressing "Enter" with the cursor on
-   the event, which will then take some backend-specific action.
+   from any of its sources (i.e., ERC, org-mode appointments, D-Bus). You can
+   'activate' a source by pressing "Enter" with the cursor on the event, which
+   will then take some backend-specific action.
 
    For example, for the ERC-backend, it will transfer you to the buffer
-   (IRC-channel) where said event happened.
-
-   You can clear all events with =M-x sauron-clear= (default keybinding: =c=).
+   (IRC-channel) where said event happened. You can clear all events with =M-x
+   sauron-clear= (default keybinding: =c=).
 
    You can toggle between showing and hiding of the Sauron frame or window using
    =M-x sauron-toggle-hide-show=.
