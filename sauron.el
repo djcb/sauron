@@ -235,7 +235,7 @@ e.g. when using ERC.")
   (setq header-line-format
     (cons
       (make-string (floor (fringe-columns 'left t)) ?\s)
-      (map 'list
+      (mapcar
 	(lambda (elm)
 	  (let ((field (cdr (assoc (car elm) sr-column-name-alist)))
 		 (width (cdr elm)))
