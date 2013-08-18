@@ -24,7 +24,8 @@ FILES=	sauron.el		\
 	sauron-jabber.el	\
 	sauron-org.el		\
 	sauron-notifications.el \
-	sauron-twittering.el
+	sauron-twittering.el \
+	sauron-emms.el
 
 ELPA_FILES = $(FILES)	\
 	sauron-pkg.el

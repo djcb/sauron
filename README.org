@@ -228,6 +228,7 @@
    - *identica* - for =identica-mode=, the social-network site
    - *twittering* - for =twittering-mode=, the emacs twitter client
    - *jabber* - for =jabber=, the IM protocol (XMPP)
+   - *emms* - the Emacs Multimedia System.
 
      By default, =sauron= tries to load all of them; this should work, even if
      you don't have some of these packages (they simply won't be activated).
