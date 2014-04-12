@@ -24,6 +24,21 @@
 ;;; Code:
 (require 'jabber nil 'noerror)
 
+(defvar sauron-prio-jabber-alert-message 3
+  "Jabber alert message event priority.")
+
+(defvar sauron-prio-jabber-alert-info-message 2
+  "Jabber alert info message event priority.")
+
+(defvar sauron-prio-jabber-alert-muc 3
+  "Jabber alert MUC event priority.")
+
+(defvar sauron-prio-jabber-alert-presence 2
+  "Jabber alert presence event priority.")
+
+(defvar sauron-prio-jabber-lost-connection 2
+  "Jabber lost connection event priority.")
+
 (defvar sr-jabber-running nil
   "*internal* whether sauron jabber is running.")
 
@@ -65,21 +80,24 @@
 (defun sr-jabber-alert-message-func (from buffer text
                                                 proposed-alert)
   (let ((name (jabber-jid-displayname from)))
-    (sauron-add-event 'jabber 3 proposed-alert
+    (sauron-add-event 'jabber sauron-prio-jabber-alert-message
+                      proposed-alert
                       `(lambda ()
                          (sauron-switch-to-marker-or-buffer
                           ,(buffer-name buffer))))))
 
 (defun sr-jabber-alert-info-message-func (what buffer
                                                      proposed-alert)
-  (sauron-add-event 'jabber 2 proposed-alert
+  (sauron-add-event 'jabber sauron-prio-jabber-alert-info-message
+                    proposed-alert
                     `(lambda ()
                        (sauron-switch-to-marker-or-buffer
                         ,(buffer-name buffer)))))
 
 (defun sr-jabber-alert-muc-func (nick group buffer text
                                             proposed-alert)
-  (sauron-add-event 'jabber 3 proposed-alert
+  (sauron-add-event 'jabber sauron-prio-jabber-alert-muc
+                    proposed-alert
                     `(lambda ()
                        (sauron-switch-to-marker-or-buffer
                         ,(buffer-name buffer)))))
@@ -89,12 +107,14 @@
                                                 proposed-alert)
   (if (not (or (string-equal proposed-alert "")
                (eq proposed-alert nil)))
-      (sauron-add-event 'jabber 2 proposed-alert)))
+      (sauron-add-event 'jabber sauron-prio-jabber-alert-presence
+                        proposed-alert)))
 
 (defun sr-jabber-lost-connection-func (conn)
-  (sauron-add-event 'jabber 2 (format "Connection for %s lost"
-                                      (jabber-jid-username
-                                       (jabber-connection-jid conn)))))
+  (sauron-add-event 'jabber sauron-prio-jabber-lost-connection
+                    (format "Connection for %s lost"
+                            (jabber-jid-username
+                             (jabber-connection-jid conn)))))
 
 (provide 'sauron-jabber)
 
