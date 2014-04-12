@@ -25,6 +25,9 @@
 
 (require 'twittering-mode nil 'noerror)
 
+(defvar sauron-prio-twittering-new-tweets 3
+  "Twittering new tweets event priority.")
+
 (defvar sauron-twittering-running nil
   "when non-nil, sauron-twittering is running")
 
@@ -53,7 +56,8 @@
 (defun sauron-twittering-new-tweets-func ()
   "Hook which handles the arrival of new tweets. Main entry point and interface
 to twittering."
-  (sr-twit-add-event 3 (format "%d new tweets"  twittering-new-tweets-count)
+  (sr-twit-add-event sauron-prio-twittering-new-tweets
+                     (format "%d new tweets"  twittering-new-tweets-count)
     (lexical-let
       ((tweets-spec twittering-new-tweets-spec)
 	(tweets-data twittering-new-tweets-statuses)
