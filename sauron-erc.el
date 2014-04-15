@@ -35,6 +35,21 @@ The following events are erc-track
 - current-nick:  current nick mentioned in ERC
 - keyword:       some keyword mentioned in ERC.")
 
+(defvar sauron-prio-erc-default 2
+  "ERC event default priority.")
+
+(defvar sauron-prio-erc-privmsg-root 2
+  "ERC message from root event priority.")
+
+(defvar sauron-prio-erc-privmsg-for-me 3
+  "ERC message for me event priority.")
+
+(defvar sauron-prio-erc-privmsg-mentioned 3
+  "ERC mention event priority.")
+
+(defvar sauron-prio-erc-privmsg-default 2
+  "ERC private message event default priority.")
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defvar sr-erc-running nil
   "*internal* Whether sauron erc is running.")
@@ -72,7 +87,7 @@ The following events are erc-track
 	  (msg     (erc-response.contents parsed)))
     (sauron-add-event
       'erc
-      2
+      sauron-prio-erc-default
       (concat (propertize sender 'face 'sauron-highlight1-face) " has "
 	(case event
 	  ('quit (concat "quit (" msg ")"))
@@ -116,10 +131,14 @@ The following events are erc-track
 	    (for-me  (string= me channel))
 	    (prio
 	      (cond
-		((string= sender "root") 2)  ;; e.g. bitlbee stuff; low-prio
-		(for-me	                 3)  ;; private msg for me => prio 4
-		((string-match me msg)	 3)  ;; I'm mentioned => prio 3
-		(t			 2)))  ;; default
+                ;; e.g. bitlbee stuff; low-prio
+		((string= sender "root") sauron-prio-erc-privmsg-root)
+                ;; private msg for me => prio 4
+		(for-me sauron-prio-erc-privmsg-for-me)
+                ;; I'm mentioned => prio 3
+		((string-match me msg) sauron-prio-erc-privmsg-mentioned)
+                ;; default
+		(t sauron-prio-erc-privmsg-default)))
 	    (target (if (buffer-live-p (get-buffer channel))
 	     	      (with-current-buffer (get-buffer channel)
 			(point-marker)))))
