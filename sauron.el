@@ -129,6 +129,20 @@ ORIGIN is a symbol denoting the source of the event (ie.,'erc or 'dbus)
 MSG is the message for this event
 PROPS is a backend-specific plist.")
 
+(defvar sauron-prio-adjust-functions nil
+  "Hook to be called when an event is added, allowing functions to modify
+the event priority. The hook function can return an integer which will be
+added to the event priority. Any other return value is ignored, and the
+value will be clamped to [0;5] afterwards. This hook is run *after*
+adjustments made according the nick and pattern watch strings.
+
+The hook function takes the following arguments:
+  (ORIGIN PRIO MSG PROPS), where:
+ORIGIN is a symbol denoting the source of the event (ie.,'erc or 'dbus)
+PRIO is the event priority before any adjustments are made.
+MSG is the message for this event.
+PROPS is a backend-specific plist.")
+
 
 ;;  faces; re-using the font-lock stuff...
 (defgroup sauron-faces nil
@@ -347,8 +361,16 @@ Returns the new priority."
 	  (incf prio))
 	(when (sr-pattern-matches nick sauron-watch-nicks 'string=)
 	  (incf prio))
+        (sr-ignore-errors-maybe ;; ignore errors unless we're debugging
+         (setq prio (+ prio (apply '+ (mapcar
+                                       (lambda (f)
+                                         (let ((ret (funcall f origin prio msg props)))
+                                           (if (integerp ret) ret 0)))
+                                       sauron-prio-adjust-functions)))))
 	(when (> prio 5)
-	  (setq prio 5))))
+	  (setq prio 5))
+        (when (< prio 0)
+          (setq prio 0))))
       prio))
 
 
