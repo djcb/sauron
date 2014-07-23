@@ -129,6 +129,12 @@ ORIGIN is a symbol denoting the source of the event (ie.,'erc or 'dbus)
 MSG is the message for this event
 PROPS is a backend-specific plist.")
 
+(defvar sauron-prio-sauron-started 3
+  "Sauron started event priority.")
+
+(defvar sauron-prio-sauron-stopped 1
+  "Sauron stopped event priority.")
+
 
 ;;  faces; re-using the font-lock stuff...
 (defgroup sauron-faces nil
@@ -283,7 +289,7 @@ don't show the sauron window."
       (message "Sauron has started")
       (unless hidden
 	(sr-show))
-      (sauron-add-event 'sauron 3
+      (sauron-add-event 'sauron sauron-prio-sauron-started
 	(concat "sauron started: " (mapconcat 'identity started ", "))))))
 
 ;;;###autoload
@@ -305,7 +311,7 @@ don't show the sauron window."
 	  (error "%s not defined" stop-func-name))))
     (message "Sauron has stopped")
     (setq sr-running-p nil)
-    (sauron-add-event 'sauron 1 "sauron has stopped")
+    (sauron-add-event 'sauron sauron-prio-sauron-stopped "sauron has stopped")
     (sr-hide)))
 
 (defun sr-pattern-matches (str ptrnlist cmpfunc)

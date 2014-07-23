@@ -27,6 +27,18 @@
 
 ;; this is really about 'appt', not 'org', but anyway...
 
+(defvar sauron-prio-org-default 5
+  "Org event default priority.")
+
+(defvar sauron-prio-org-minutes-left-list
+  '((15 2)
+    (10 3)
+    (5 3)
+    (2 4))
+  "A list of pairs, where the first element of each pair is the
+number of minutes left before the appointment and the last
+element is an Org event priority.")
+
 (defvar sr-org-old-appt-func nil
   "*internal* The old org appt function.")
 
@@ -36,7 +48,7 @@
 (defun sauron-org-start ()
   "Start watching org (appt)."
   (if (not (boundp 'appt-disp-window-function))
-    (progn 
+    (progn
       (message "sauron-org not available")
       nil)
     (unless sr-org-running
@@ -68,13 +80,11 @@ arguments rather than single values."
 (defun sr-org-handler-func-real (minutes-to-app new-time msg)
   "Handle appointment reminders. Also see: `sr-org-handler-func.'"
   (let* ((left (string-to-number minutes-to-app))
-	  (prio ;; priorities, hard-coded....
-	    (cond
-	      ((> left 15) 2)
-	      ((> left 10) 3)
-	      ((> left 5)  3)
-	      ((> left 2)  4)
-	      (t 5))))
+         (prio (catch 'prio-found
+                 (dolist (pair sauron-prio-org-minutes-left-list)
+                   (when (> left (car pair))
+                     (throw 'prio-found (car (last pair)))))
+                 sauron-prio-org-default)))
     (sauron-add-event 'org prio
       (format "%s minutes left before %s" minutes-to-app msg)
       'org-agenda-list

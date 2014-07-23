@@ -24,6 +24,9 @@
 ;;; Code:
 (require 'identica-mode nil 'noerror)
 
+(defvar sauron-prio-identica-new-dents 3
+  "Identica new dents event priority.")
+
 (defvar sr-identica-running nil
   "*internal* whether sauron identica is running.")
 
@@ -49,7 +52,7 @@
 (defun sr-identica-new-dents-func ()
   "Print the # of new dents."
   (sauron-add-event
-   'identica 3
+   'identica sauron-prio-identica-new-dents
    (if (= identica-new-dents-count 1)
        "There is 1 new dent."
      (format "There are %i new dents." identica-new-dents-count))
