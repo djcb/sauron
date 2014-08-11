@@ -36,6 +36,9 @@
 (defvar sauron-prio-jabber-alert-presence 2
   "Jabber alert presence event priority.")
 
+(defvar sauron-prio-jabber-connected 2
+  "Jabber connected event priority.")
+
 (defvar sauron-prio-jabber-lost-connection 2
   "Jabber lost connection event priority.")
 
@@ -57,6 +60,8 @@
                 'sr-jabber-alert-info-message-func)
       (add-hook 'jabber-alert-presence-hooks
                 'sr-jabber-alert-presence-func)
+      (add-hook 'jabber-post-connect-hooks
+                'sr-jabber-post-connect-func)
       (add-hook 'jabber-lost-connection-hooks
                 'sr-jabber-lost-connection-func)
       (setq sr-jabber-running t))
@@ -73,6 +78,8 @@
                  'sr-jabber-alert-muc-func)
     (remove-hook 'jabber-alert-presence-hooks
                  'sr-jabber-alert-presence-func)
+    (remove-hook 'jabber-post-connect-hooks
+                 'sr-jabber-post-connect-func)
     (remove-hook 'jabber-lost-connection-hooks
                  'sr-jabber-lost-connection-func)
     (setq sr-jabber-running nil)))
@@ -109,6 +116,11 @@
                (eq proposed-alert nil)))
       (sauron-add-event 'jabber sauron-prio-jabber-alert-presence
                         proposed-alert)))
+
+(defun sr-jabber-post-connect-func (conn)
+  (sauron-add-event 'jabber sauron-prio-jabber-connected
+                    (format "%s connected"
+                            (jabber-connection-jid conn))))
 
 (defun sr-jabber-lost-connection-func (conn)
   (sauron-add-event 'jabber sauron-prio-jabber-lost-connection
