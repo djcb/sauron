@@ -329,7 +329,7 @@ otherwise return nil. CMPFUNC is the comparison function."
 otherwise, return nil, and update the table with the NICK and a
 timestamp."
    ;; we only store the lsb, which is good enough for 2^16 seconds.
-  (let* ((now-lsb (nth 1 (current-time))) ;; the stupid emacs time
+  (let* ((now-lsb (float-time))
 	 (tstamp (gethash nick sr-nick-event-hash))
 	  (diff (when tstamp (- now-lsb tstamp))))
     (when (or (not diff) (> diff sauron-nick-insensitivity))
