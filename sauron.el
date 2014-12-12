@@ -193,7 +193,7 @@ PROPS is a backend-specific plist.")
   (let ((map (make-sparse-keymap)))
     (define-key map "c"               'sauron-clear)
     (define-key map (kbd "RET")       'sauron-activate-event)
-    (define-key map (kbd "<mouse-2>") 'sauron-activate-event)
+    (define-key map (kbd "<mouse-2>") 'sauron-activate-mouse-event)
     (define-key map (kbd "<M-up>")    'sauron-activate-event-prev)
     (define-key map (kbd "<M-down>")  'sauron-activate-event-next)
     (define-key map "n"               'next-line)
@@ -468,6 +468,15 @@ PROPS an origin-specific property list that will be passed to the hook funcs."
       (sr-ignore-errors-maybe ;; ignore errors unless we're debugging
 	(run-hook-with-args
 	  'sauron-event-added-functions origin prio msg props)))))
+
+(defun sauron-activate-mouse-event (event)
+  "Helper function to position point on the beginning of the
+clicked line before calling sauron-activate-event."
+  (interactive "e")
+  (let ((pos (posn-point (event-end event))))
+    (goto-char pos)
+    (beginning-of-line)
+    (sauron-activate-event)))
 
 (defun sauron-activate-event ()
   "Activate the callback for the current sauron line, and remove
