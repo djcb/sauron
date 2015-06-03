@@ -30,11 +30,13 @@
 
 ;; Variables
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defvar sauron-prio-elfeed-default 3
+(defvar sauron-prio-elfeed-default 2
   "ELFEED event default priority.")
 
 (defvar sauron-elfeed-prio-hash (make-hash-table :test 'equal)
-  "Hashtable to associate a priority for each feed.")
+  "Hashtable to associate a priority for each feed.  
+You can add a specific priority using `puthash' using the url of
+the seed as a key and the priority as the value.")
 
 (defvar sr-elfeed-running nil
   "*internal* Whether sauron elfeed is running.")
