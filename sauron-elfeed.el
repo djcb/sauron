@@ -41,6 +41,32 @@ the seed as a key and the priority as the value.")
 (defvar sr-elfeed-running nil
   "*internal* Whether sauron elfeed is running.")
 
+;; Elfeed temp. part
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+x
+(defvar elfeed-update-interval (* 15 60)
+  "Interval time between two updates. 
+Default value is 15min.")
+
+(defvar elfeed-update-timer nil
+  "Timer defined by elfeed-update-background-start.")
+
+(defun elfeed-update-background-start ()
+  "Start an automatic update.  
+elfeed-update-timer is defined in this function."
+  (interactive)
+  (if elfeed-update-timer
+    (warn "elfeed background update is already started")
+    (setq elfeed-update-timer (run-with-timer 0 elfeed-update-interval 'elfeed-update))))
+
+(defun elfeed-update-background-stop ()
+  "Stop the automatic update."
+  (interactive)
+  (if elfeed-update-timer
+      (progn
+        (cancel-timer elfeed-update-timer)
+        (setq elfeed-update-timer nil))
+    (warn "elfeed background update is alread stopped")))
 
 ;; Sauron commands
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -85,7 +111,8 @@ the seed as a key and the priority as the value.")
            (gethash url sauron-elfeed-prio-hash)
          sauron-prio-elfeed-default)
        
-       (concat (propertize (elfeed-feed-title (elfeed-db-get-feed url)) 'face 'sauron-highlight1-face)
+       (concat (propertize (elfeed-feed-title (elfeed-db-get-feed url)) 
+                           'face 'sauron-highlight1-face)
                " has "
                (format "%d" nb-unread)
                " new entries")))))
