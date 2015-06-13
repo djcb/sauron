@@ -27,7 +27,6 @@
 (eval-when-compile
   (require 'cl))
 
-
 ;; Variables
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defvar sauron-prio-elfeed-default 2
@@ -43,7 +42,6 @@ the seed as a key and the priority as the value.")
 
 ;; Elfeed temp. part
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
 (defvar elfeed-update-interval (* 15 60)
   "Interval time between two updates. 
 Default value is 15min.")
@@ -72,7 +70,8 @@ elfeed-update-timer is defined in this function."
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defun sauron-elfeed-start ()
   "Start watching ELFEED."
-  (if (not (boundp 'elfeed-version-string))
+  (interactive)
+  (if (not (boundp 'elfeed-version))
     (progn
       (message "sauron-elfeed not available")
       nil)
@@ -83,6 +82,7 @@ elfeed-update-timer is defined in this function."
 
 (defun sauron-elfeed-stop ()
   "Stop watching ELFEED."
+  (interactive)
   (when sr-elfeed-running
     (remove-hook 'elfeed-update-hooks 'sr-elfeed-update-hook-func)
     (setq sr-elfeed-running nil)))
