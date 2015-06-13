@@ -43,7 +43,7 @@ the seed as a key and the priority as the value.")
 
 ;; Elfeed temp. part
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-x
+
 (defvar elfeed-update-interval (* 15 60)
   "Interval time between two updates. 
 Default value is 15min.")
