@@ -39,10 +39,10 @@
 
 (defvar sauron-modules
   '(sauron-erc sauron-dbus sauron-org sauron-notifications
-     sauron-twittering sauron-jabber sauron-identica)
+     sauron-twittering sauron-jabber sauron-identica sauron-elfeed)
   "List of sauron modules to use. Currently supported are:
 sauron-erc, sauron-org and sauron-dbus, sauron-twittering,
-sauron-jabber, sauron-identica.")
+sauron-jabber, sauron-identica, sauron-elfeed.")
 
 (defvar sauron-separate-frame t
   "Show sauron in a separate frame; if set to nil (*experimental*),
