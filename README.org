@@ -219,7 +219,7 @@
 
 ** the backend modules
 
-   Currently, 7 backend modules have been implemented:
+   Currently, 8 backend modules have been implemented:
 
    - *erc* - for ERC, the emacs IRC client
    - *org-mode* - for tracking =org-mode= (=appt=) notifications
@@ -228,6 +228,7 @@
    - *identica* - for =identica-mode=, the social-network site
    - *twittering* - for =twittering-mode=, the emacs twitter client
    - *jabber* - for =jabber=, the IM protocol (XMPP)
+   - *elfeed* - for =elfeed=, an emacs Atom/RSS feed reader 
 
      By default, =sauron= tries to load all of them; this should work, even if
      you don't have some of these packages (they simply won't be activated).
@@ -363,7 +364,14 @@
     The info, presence and connection events get priority 2, so by default you won't
     get to see these. The others get priority 3, so those /should/ be visible by
     default.
+*** elfeed
+=sauron-elfeed= show events from elfeed.el, this include new entries in each feed.
 
+By default, all events get priority 2 therefore you won't get to see these. However, it is possible
+to configure the priority using the following instruction
+#+begin_src emacs-lisp
+(puthash url priority sauron-elfeed-prio-hash)
+#+end_src
 ** adding new modules
 
    It may be interesting to track other modules as well; this shouldn't be too
