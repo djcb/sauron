@@ -25,10 +25,10 @@
 
    ;; set load path, obviously replace "<path-to-sauron-dir>" with the actual path...
 
-#+begin_example
-:   (add-to-list 'load-path "<path-to-sauron-dir>")
-:   (require 'sauron)
-#+end_example
+   #+begin_example
+   (add-to-list 'load-path "<path-to-sauron-dir>")
+   (require 'sauron)
+   #+end_example
 
    Now, you can start sauron with... =M-x sauron-start=, and stop it with =M-x
    sauron-stop=.
@@ -65,9 +65,9 @@
     Sauron can be shown either as a separate frame (the default), or embedded in
     your current frame. For the latter, set =sauron-separate-frame= to =nil=:
 
-#+begin_src
-:  (setq sauron-separate-frame nil)
-#+end_src
+    #+begin_src
+  (setq sauron-separate-frame nil)
+    #+end_src
 
     Note, this latter option (embedded sauron) is *experimental*. Emacs does not
     make it easy to do this reliable. Note, you can use: =M-x
@@ -78,15 +78,15 @@
 
     You can remove the mode-line in the sauron-buffer by setting
     =sauron-hide-mode-line= to =t=, e.g.:
-#+begin_src
-:  (setq sauron-hide-mode-line t)
-#+end_src
+    #+begin_src
+  (setq sauron-hide-mode-line t)
+    #+end_src
 
     You can make the Sauron window appear on every (virtual) desktop by setting
     ~sauron-sticky-add~ to t, i.e..
-#+begin_src
-:  (setq sauron-sticky-frame t)
-#+end_src
+    #+begin_src
+  (setq sauron-sticky-frame t)
+    #+end_src
 
     in your configuration. Depending on your window manager, this may also set
     the frame to be /always-on-top/. Obviously, this is only effective if you
@@ -114,11 +114,11 @@
     name, or your hobby project is mentioned in some IRC channel.
 
     So, for example, as part of your settings:
-#+begin_example
-:;; watch for some animals
-:(setq sauron-watch-patterns
-:  '("\\bgnu\\b" "yak" "capybara" "wombat"))
-#+end_example
+    #+begin_example
+;; watch for some animals
+(setq sauron-watch-patterns
+  '("\\bgnu\\b" "yak" "capybara" "wombat"))
+    #+end_example
 
 *** watching nicks -- =sauron-watch-nicks=
 
@@ -147,14 +147,14 @@
     documentation for a general introduction to hook functions, here's an
     example:
 
-#+begin_example
-:(add-hook 'sauron-event-block-functions
-:  (lambda (origin prio msg &optional props)
-:    (or
-:      (string-match "foo" msg) ;; ignore events that match 'foo'
-:      ;; other matchers
-:     )))
-#+end_example
+    #+begin_example
+(add-hook 'sauron-event-block-functions
+  (lambda (origin prio msg &optional props)
+    (or
+      (string-match "foo" msg) ;; ignore events that match 'foo'
+      ;; other matchers
+     )))
+    #+end_example
 
     Note that the =props= parameter is a backend specific property-list, which
     allows you e.g. (for the ERC-backend) to get the sender of some ERC message,
@@ -184,16 +184,16 @@
 
     Now, our hook function could look something like:
 
-#+begin_example
-:(add-hook 'sauron-event-added-functions
-:  (lambda (origin prio msg &optional props)
-:    (if (string-match "ping" msg)
-:      (sauron-fx-sox "/usr/share/sounds/ping.wav")
-:      (sauron-fx-sox "/usr/share/sounds/something-happened.wav"))
-:    (when (>= prio 4)
-:	(sauron-fx-sox "/usr/share/sounds/uhoh.wav")
-:	(sauron-fx-gnome-osd msg 10))))
-#+end_example
+    #+begin_example
+(add-hook 'sauron-event-added-functions
+  (lambda (origin prio msg &optional props)
+    (if (string-match "ping" msg)
+      (sauron-fx-sox "/usr/share/sounds/ping.wav")
+      (sauron-fx-sox "/usr/share/sounds/something-happened.wav"))
+    (when (>= prio 4)
+	(sauron-fx-sox "/usr/share/sounds/uhoh.wav")
+	(sauron-fx-gnome-osd msg 10))))
+    #+end_example
 
 
 *** Seeing /all/ events
@@ -210,9 +210,9 @@
    some wrapper function to make it trivial to feed sauron events into
    alert. Simply adding:
 
-#+begin_src emacs-lisp
+   #+begin_src emacs-lisp
    (add-hook 'sauron-event-added-functions 'sauron-alert-el-adapter)
-#+end_src
+   #+end_src
 
    in your setup should do the trick (of course, =alert.el= must be loaded).
 
@@ -273,28 +273,28 @@
     The dbus backend allows you to get events from outside emacs; it listens for
     two messages, =AddUrlEvent= and =AddMsgEvent=. You can call them like this:
 
-#+begin_src sh
-:    dbus-send --session --dest="org.gnu.Emacs"	   \
-:              --type=method_call                  \
-:    "/org/gnu/Emacs/Sauron"                       \
-:    "org.gnu.Emacs.Sauron.AddUrlEvent"            \
-:    string:shell uint32:3 string:"Link: Emacs-Fu" \
-:    string:"http://emacs-fu.blogspot.com"
-#+end_src
+    #+begin_src sh
+    dbus-send --session --dest="org.gnu.Emacs"	   \
+              --type=method_call                  \
+    "/org/gnu/Emacs/Sauron"                       \
+    "org.gnu.Emacs.Sauron.AddUrlEvent"            \
+    string:shell uint32:3 string:"Link: Emacs-Fu" \
+    string:"http://emacs-fu.blogspot.com"
+    #+end_src
 
     The four parameters are resp. the originator ('shell'), the priority ('3' in the
     example), a description and a URL. This will show up in the sauron buffer (if
     the priority is high enough), and if you activate the event (press RET), your
     browser will visit the link.
 
-#+begin_src sh
-:    dbus-send --session          	          \
-:    --dest="org.gnu.Emacs"	                  \
+    #+begin_src sh
+    dbus-send --session          	          \
+    --dest="org.gnu.Emacs"	                  \
      --type=method_call                           \
-:     "/org/gnu/Emacs/Sauron"                     \
-:    "org.gnu.Emacs.Sauron.AddMsgEvent"           \
-:    string:shell uint32:3 string:"Hello, world!"
-#+end_src
+     "/org/gnu/Emacs/Sauron"                     \
+    "org.gnu.Emacs.Sauron.AddMsgEvent"           \
+    string:shell uint32:3 string:"Hello, world!"
+    #+end_src
 
     The three parameters are resp. the sender ('shell'), the priority ('3' in the
     example), and message. This will show up in the sauron buffer (if the priority
@@ -304,14 +304,14 @@
     'Transmission'. In the torrent-completion script (see Preferences/
     Call-script-when-torrent-is-completed), add something like:
 
-#+begin_src sh
-:    dbus-send --session          	          \
-:    --dest="org.gnu.Emacs"	                  \
-:    --type=method_call                           \
-:     "/org/gnu/Emacs/Sauron"                     \
-:    "org.gnu.Emacs.Sauron.AddMsgEvent"           \
-:    string:Transmission uint32:3 string:"Torrent completed: $TR_TORRENT_NAME"
-#+end_src
+    #+begin_src sh
+    dbus-send --session          	          \
+    --dest="org.gnu.Emacs"	                  \
+    --type=method_call                           \
+     "/org/gnu/Emacs/Sauron"                     \
+    "org.gnu.Emacs.Sauron.AddMsgEvent"           \
+    string:Transmission uint32:3 string:"Torrent completed: $TR_TORRENT_NAME"
+    #+end_src
 
     You also need to enable the web client support in Transmission - it's in the
     'Web' tab of the preferences dialog.
@@ -332,9 +332,9 @@
      address (=DBUS_SESSION_BUS_ADDRESS=). Using this address you can, in fact, send
      messages to sauron from outside your session, by doing something like in the
      previous examples, but first setting =DBUS_SESSION_BUS_ADDRESS=:
-#+begin_src sh
-:DBUS_SESSION_BUS_ADDRESS="`cat ~/.sauron-dbus`" dbus-send ....
-#+end_src
+     #+begin_src sh
+DBUS_SESSION_BUS_ADDRESS="`cat ~/.sauron-dbus`" dbus-send ....
+     #+end_src
 
      We don't write =~/.sauron-dbus= as there may be security downsides to this -
      even though normally other users are not allowed to send to 'your' session bus,
@@ -365,13 +365,13 @@
     get to see these. The others get priority 3, so those /should/ be visible by
     default.
 *** elfeed
-=sauron-elfeed= show events from elfeed.el, this include new entries in each feed.
+    =sauron-elfeed= show events from elfeed.el, this include new entries in each feed.
 
-By default, all events get priority 2 therefore you won't get to see these. However, it is possible
-to configure the priority using the following instruction
-#+begin_src emacs-lisp
+    By default, all events get priority 2 therefore you won't get to see these. However, it is possible
+    to configure the priority using the following instruction
+    #+begin_src emacs-lisp
 (puthash url priority sauron-elfeed-prio-hash)
-#+end_src
+    #+end_src
 ** adding new modules
 
    It may be interesting to track other modules as well; this shouldn't be too
@@ -395,16 +395,16 @@ to configure the priority using the following instruction
    backend modules might be unnecessary; you can simply call the
    =sauron-add-event= function directly. See its docstring for the details. Example:
 
-#+begin_src emacs-lisp
-:(sauron-add-event
-:   'kitchen           ;; origin
-:   3                  ;; priority
-:   "Coffee is ready!"
-:   '(lambda ()        ;; function called when activated
-:      (message "Coffee's ready, get it while it's hot!"))
-:   '(:temperature 80)) ;; arbitrary props passed to
-:                       ;; hook functions
-#+end_src
+   #+begin_src emacs-lisp
+(sauron-add-event
+   'kitchen           ;; origin
+   3                  ;; priority
+   "Coffee is ready!"
+   '(lambda ()        ;; function called when activated
+      (message "Coffee's ready, get it while it's hot!"))
+   '(:temperature 80)) ;; arbitrary props passed to
+                       ;; hook functions
+   #+end_src
 
    A typical pattern may also be to switch to the buffer of origin when the
    event is activated. The =sauron-switch-to-marker-or-buffer= function may be
@@ -414,46 +414,46 @@ to configure the priority using the following instruction
 
 ** sample configuration
 
-#+begin_src emacs-lisp
-:(require 'sauron)
-:
-: ;; note, you add (setq sauron-debug t) to get errors which can debug if
-: ;; there's something wrong; normally, we catch such errors, since e.g an error
-: ;; in one of the hooks may cause ERC to fail (i.e., the message won't come
-: ;; trough).
-:
-:(global-set-key (kbd "C-c s") 'sauron-toggle-hide-show)
-:(global-set-key (kbd "C-c t") 'sauron-clear)
-:
-:(setq
-:  sauron-max-line-length 120
-:
-:  ;; uncomment to show sauron in the current frame
-:  ;; sauron-separate-frame nil
-:
-:  ;; you probably want to add your own nickname to the these patterns
-:  sauron-watch-patterns
-:  '("emacs-fu" "emacsfu" "wombat" "capybara" "yak" "gnu" "\\bmu\\b")
-:
-:  ;; you probably want to add you own nick here as well
-:  sauron-watch-nicks
-:  '("Tom" "Dick" "Harry"))
-:
-:;; some sound/light effects for certain events
-:(add-hook 'sauron-event-added-functions
-:  (lambda (origin prio msg &optional props)
-:    (if (string-match "ping" msg)
-:      (sauron-fx-sox "/usr/share/sounds/ping.wav"))
-:    (cond
-:      ((= prio 3) (sauron-fx-sox "/usr/share/sounds/pling.wav"))
-:      ((= prio 4) (sauron-fx-sox "/usr/share/sounds/plong.wav"))
-:      ((= prio 5)
-:	(sauron-fx-sox "/usr/share/sounds/alarm.wav")
-:	(sauron-fx-gnome-osd(format "%S: %s" origin msg) 5)))))
-:
-:;; events to ignore
-:(add-hook 'sauron-event-block-functions
-:  (lambda (origin prio msg &optional props)
-:    (or
-:      (string-match "^*** Users" msg)))) ;; filter out IRC spam
-#+end_src
+   #+begin_src emacs-lisp
+(require 'sauron)
+
+ ;; note, you add (setq sauron-debug t) to get errors which can debug if
+ ;; there's something wrong; normally, we catch such errors, since e.g an error
+ ;; in one of the hooks may cause ERC to fail (i.e., the message won't come
+ ;; trough).
+
+(global-set-key (kbd "C-c s") 'sauron-toggle-hide-show)
+(global-set-key (kbd "C-c t") 'sauron-clear)
+
+(setq
+  sauron-max-line-length 120
+
+  ;; uncomment to show sauron in the current frame
+  ;; sauron-separate-frame nil
+
+  ;; you probably want to add your own nickname to the these patterns
+  sauron-watch-patterns
+  '("emacs-fu" "emacsfu" "wombat" "capybara" "yak" "gnu" "\\bmu\\b")
+
+  ;; you probably want to add you own nick here as well
+  sauron-watch-nicks
+  '("Tom" "Dick" "Harry"))
+
+;; some sound/light effects for certain events
+(add-hook 'sauron-event-added-functions
+  (lambda (origin prio msg &optional props)
+    (if (string-match "ping" msg)
+      (sauron-fx-sox "/usr/share/sounds/ping.wav"))
+    (cond
+      ((= prio 3) (sauron-fx-sox "/usr/share/sounds/pling.wav"))
+      ((= prio 4) (sauron-fx-sox "/usr/share/sounds/plong.wav"))
+      ((= prio 5)
+	(sauron-fx-sox "/usr/share/sounds/alarm.wav")
+	(sauron-fx-gnome-osd(format "%S: %s" origin msg) 5)))))
+
+;; events to ignore
+(add-hook 'sauron-event-block-functions
+  (lambda (origin prio msg &optional props)
+    (or
+      (string-match "^*** Users" msg)))) ;; filter out IRC spam
+   #+end_src
