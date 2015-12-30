@@ -39,7 +39,8 @@
 
 (defvar sauron-modules
   '(sauron-erc sauron-dbus sauron-org sauron-notifications
-     sauron-twittering sauron-jabber sauron-identica sauron-elfeed)
+               sauron-twittering sauron-jabber sauron-identica sauron-elfeed
+               sauron-compilation)
   "List of sauron modules to use. Currently supported are:
 sauron-erc, sauron-org and sauron-dbus, sauron-twittering,
 sauron-jabber, sauron-identica, sauron-elfeed.")
