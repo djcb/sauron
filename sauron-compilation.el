@@ -58,7 +58,7 @@ name and message to this function."
   (sauron-add-event 'compilation
                     sauron-prio-compilation
                     (format "[%s]: %s" buffer msg)
-                    '(lambda () (switch-to-buffer buffer))
+                    '(lambda () (switch-to-buffer "*compilation*"))
                     nil))
 
 (provide 'sauron-compilation)
