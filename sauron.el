@@ -1,6 +1,6 @@
 ;;; sauron.el --- a frame tracking events inside and outside your emacs buffers
 ;;
-;; Copyright (C) 2011-2012 Dirk-Jan C. Binnema
+;; Copyright (C) 2011-2015 Dirk-Jan C. Binnema
 
 ;; Author: Dirk-Jan C. Binnema <djcb@djcbsoftware.nl>
 ;; Maintainer: Dirk-Jan C. Binnema <djcb@djcbsoftware.nl>
@@ -442,13 +442,14 @@ PROPS an origin-specific property list that will be passed to the hook funcs."
   (let* ((line (sr-event-line origin prio msg))
 	 ;; add the callback as a text property, remove any embedded newlines,
 	 ;; truncate if necessary append a newline
-	 (line (replace-regexp-in-string "\n" " " line))
-	 (line (if sauron-max-line-length
-		   (truncate-string-to-width
+	  (line (replace-regexp-in-string "\n" " " line))
+	  (line (if sauron-max-line-length
+		  (truncate-string-to-width
 		    line sauron-max-line-length 0 nil t)
-		 line))
-	 (line (concat (propertize line 'callback func) "\n"))
-	 (inhibit-read-only t))
+		  line))
+	  (line (concat (propertize line 'callback func) "\n"))
+	  (line (propertize line 'status 'unhandled))
+	  (inhibit-read-only t))
 
     ;; when logging is enabled, write the line to the sauron log as well
     (when sauron-log-events (sr-add-to-log line))
@@ -486,12 +487,28 @@ any special faces from the line."
     (error "Not in sauron mode"))
   (let* ((callback (get-text-property (point) 'callback))
   	  (inhibit-read-only t))
-    ;; remove the funky faces
+    ;; handled face (by default) does a strike-through of the events
     (put-text-property (line-beginning-position) (line-end-position)
       'face 'sauron-event-handled-face)
+    (put-text-property (line-beginning-position) (line-end-position)
+      'status 'handled)
     (if callback
       (funcall callback)
       (message "No callback defined for this line."))))
+
+(defun sauron-count-events ()
+  "Inspect the sauron events and return a cons cell (HANDLED . UNHANDLED),
+with the respective numbers for those."
+  (when (buffer-live-p sr-buffer)
+    (with-current-buffer sr-buffer
+      (save-excursion
+	(let ((handled-num 0) (unhandled-num 0))
+	  (goto-char (point-min))
+	  (while (re-search-forward "\n" nil t)
+	    (case (get-text-property (point) 'status)
+	      (handled (incf handled-num))
+	      (unhandled (incf unhandled-num))))
+	  (cons handled-num unhandled-num))))))
 
 
 (defun sauron-activate-event-prev (&optional n)
