@@ -28,6 +28,9 @@
 (defvar sauron-prio-twittering-new-tweets 3
   "Twittering new tweets event priority.")
 
+(defvar sauron-prio-twittering-mention 4
+  "Twittering @-mention event priority.")
+
 (defvar sauron-twittering-running nil
   "when non-nil, sauron-twittering is running")
 
@@ -40,7 +43,9 @@
 	(error "sauron-twittering is already running. Call
           sauron-twittering-stop first."))
 
-      (add-hook 'twittering-new-tweets-hook 'sauron-twittering-new-tweets-func)
+      (add-hook 'twittering-new-tweets-hook #'sauron-twittering-new-tweets-func)
+      (add-hook 'twittering-new-tweets-hook
+                #'sauron-twittering-check-tweet-mention-func)
       (setq sauron-twittering-running t))
     (message "No twittering, so sauron-twittering could not
     start")))
@@ -50,21 +55,47 @@
   "Stops and cleans up sauron-twittering."
   (when sauron-twittering-running
     (remove-hook 'twittering-new-tweets-hook 'sauron-twittering-new-tweets-func)
+    (remove-hook 'twittering-new-tweets-hook
+                 #'sauron-twittering-check-tweet-mention-func)
     (setq sauron-twittering-running nil)))
+
+
+(defun sauron-twittering-check-tweet-mention-func ()
+  "Hook which takes newly incoming tweets and adds sauron events
+for any mentioning `twittering-username'. Events will be added
+using `sauron-prio-twittering-mention' priority."
+  (when (and twittering-username
+             (boundp 'twittering-new-tweets-statuses))
+    (dolist (tweet twittering-new-tweets-statuses)
+      (when (string-match-p
+             (format "@%s" twittering-username)
+             (alist-get 'text tweet))
+        (sr-twit-add-event
+         sauron-prio-twittering-mention
+         (format "%s: %s"
+                 (alist-get 'user-screen-name tweet)
+                 (alist-get 'text tweet))
+         (lexical-let
+             ((tweets-spec twittering-new-tweets-spec)
+              (tweets-data twittering-new-tweets-statuses)
+              (tweets-count twittering-new-tweets-count))
+           (lambda ()
+             (sr-twit-activate-event
+              tweets-data tweets-count tweets-spec))))))))
 
 
 (defun sauron-twittering-new-tweets-func ()
   "Hook which handles the arrival of new tweets. Main entry point and interface
 to twittering."
-  (sr-twit-add-event sauron-prio-twittering-new-tweets
-                     (format "%d new tweets"  twittering-new-tweets-count)
-    (lexical-let
-      ((tweets-spec twittering-new-tweets-spec)
-	(tweets-data twittering-new-tweets-statuses)
-	(tweets-count twittering-new-tweets-count))
-      (lambda ()
-	(sr-twit-activate-event tweets-data tweets-count tweets-spec)
-	))))
+  (sr-twit-add-event
+   sauron-prio-twittering-new-tweets
+   (format "%d new tweets"  twittering-new-tweets-count)
+   (lexical-let
+       ((tweets-spec twittering-new-tweets-spec)
+        (tweets-data twittering-new-tweets-statuses)
+        (tweets-count twittering-new-tweets-count))
+     (lambda ()
+       (sr-twit-activate-event tweets-data tweets-count tweets-spec)))))
 
 (defun sr-twit-add-event (priority message callback)
   (sauron-add-event 'twittering priority message callback))
