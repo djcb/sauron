@@ -13,7 +13,7 @@
    case of IRC (ERC), it will switch you to the buffer (channel) it originated
    from. It's a bit of a generalization of what /tracking mode/ does in ERC (the
    emacs IRC client), and that is in fact how it started.
- 
+
    There's an increasing number of hooks and tunables in sauron, which allows
    you to fine-tune the behavior. However, I strive for it to be useful with
    minimal configuration.
@@ -228,7 +228,7 @@
    - *identica* - for =identica-mode=, the social-network site
    - *twittering* - for =twittering-mode=, the emacs twitter client
    - *jabber* - for =jabber=, the IM protocol (XMPP)
-   - *elfeed* - for =elfeed=, an emacs Atom/RSS feed reader 
+   - *elfeed* - for =elfeed=, an emacs Atom/RSS feed reader
 
      By default, =sauron= tries to load all of them; this should work, even if
      you don't have some of these packages (they simply won't be activated).
@@ -355,6 +355,14 @@ DBUS_SESSION_BUS_ADDRESS="`cat ~/.sauron-dbus`" dbus-send ....
 
     =sauron-identica= shows the number of new dents found by =identica-mode= whenever
     there is at least one new dent.
+
+*** twittering
+
+    =sauron-twittering= shows the number of new tweets found by
+    =twittering-mode= whenever there is at least one new tweet.
+
+    If =twittering-username= is set, it will also show @-mentions when new
+    tweets arrive.
 
 *** jabber
 
