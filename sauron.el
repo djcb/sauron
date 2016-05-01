@@ -504,10 +504,12 @@ with the respective numbers for those."
       (save-excursion
 	(let ((handled-num 0) (unhandled-num 0))
 	  (goto-char (point-min))
-	  (while (re-search-forward "\n" nil t)
-	    (case (get-text-property (point) 'status)
-	      (handled (incf handled-num))
-	      (unhandled (incf unhandled-num))))
+	  (while
+	      (progn
+		(case (get-text-property (point) 'status)
+		  (handled (incf handled-num))
+		  (unhandled (incf unhandled-num)))
+		(re-search-forward "\n" nil t)))
 	  (cons handled-num unhandled-num))))))
 
 
