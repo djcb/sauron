@@ -24,6 +24,8 @@ FILES=	sauron.el		\
 	sauron-jabber.el	\
 	sauron-org.el		\
 	sauron-notifications.el \
+	sauron-mu4e-.el         \
+	sauron-zeroconf.el      \
 	sauron-twittering.el
 
 ELPA_FILES = $(FILES)	\
