@@ -352,7 +352,7 @@ timestamp."
 2) otherwise:
    if msg matches `sauron-watch-patterns', prio = prio + 1
    if nick matches `sauron-watch-nicks', prio = prio + 1
-3) if prio > 5, prio = 5
+3) if prio > 6, prio = 6
 Returns the new priority."
   (let ((prio prio) (nick (plist-get props :sender)))
     (if (and nick (not (sr-fresh-nick-event nick))) ;;
@@ -362,8 +362,8 @@ Returns the new priority."
 	  (incf prio))
 	(when (sr-pattern-matches nick sauron-watch-nicks 'string=)
 	  (incf prio))
-	(when (> prio 5)
-	  (setq prio 5))))
+	(when (> prio 6)
+	  (setq prio 6))))
       prio))
 
 
@@ -422,7 +422,7 @@ For debugging purposes."
 (defun sauron-add-event (origin prio msg &optional func props)
   "Add a new event to the Sauron log with:
 ORIGIN the source of the event (e.g., 'erc or 'dbus or 'org)
-PRIO the priority of the event, integer [0..5]
+PRIO the priority of the event, integer [0..6]
 MSG a string describing the event.
 Then, optionally:
 FUNC if non-nil, a function called when user activates the event in the log.
@@ -431,8 +431,8 @@ PROPS an origin-specific property list that will be passed to the hook funcs."
   ;; a bit more, to make debugging easier
   (unless (symbolp origin)
     (error "sauron-add-event: ORIGIN must be a symbol, not %S" origin))
-  (unless (and (integerp prio) (>= prio 0) (<= prio 5))
-    (error "sauron-add-event: PRIO  ∈ [0..5], not %S" prio))
+  (unless (and (integerp prio) (>= prio 0) (<= prio 6))
+    (error "sauron-add-event: PRIO  ∈ [0..6], not %S" prio))
   (unless (stringp msg)
     (error "sauron-add-event: MSG must be a string, not %S" msg))
   (unless (or (null func) (functionp func))
@@ -683,7 +683,7 @@ sauron buffer."
 alert.el (https://github.com/jwiegley/alert). You can use it like:
   (add-hook 'sauron-event-added-functions 'sauron-alert-el-adapter)
 Obviously, 'alert.el' must be loaded for this to work."
-  ;; sauron priorities [0..5] mapping alert severities
+  ;; sauron priorities [0..6] mapping alert severities
   (when (fboundp 'alert)
     (let ((sev (nth prio '(trivial low normal high urgent)))
 	   (cat origin)   ;; origins map to alert categories
