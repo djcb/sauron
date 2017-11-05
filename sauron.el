@@ -685,7 +685,7 @@ alert.el (https://github.com/jwiegley/alert). You can use it like:
 Obviously, 'alert.el' must be loaded for this to work."
   ;; sauron priorities [0..5] mapping alert severities
   (when (fboundp 'alert)
-    (let ((sev (nth prio '(trivial trivial low normal moderate high urgent)))
+    (let ((sev (nth prio '(trivial low normal high urgent)))
 	   (cat origin)   ;; origins map to alert categories
 	   (title (format "Alert from %S" origin)))
       (alert msg :severity sev :title title :category cat))))
