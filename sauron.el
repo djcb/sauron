@@ -1,6 +1,6 @@
 ;;; sauron.el --- a frame tracking events inside and outside your emacs buffers
 ;;
-;; Copyright (C) 2011-2015 Dirk-Jan C. Binnema
+;; Copyright (C) 2011-2017 Dirk-Jan C. Binnema
 
 ;; Author: Dirk-Jan C. Binnema <djcb@djcbsoftware.nl>
 ;; Maintainer: Dirk-Jan C. Binnema <djcb@djcbsoftware.nl>
@@ -38,12 +38,20 @@
 (require 'cl)
 
 (defvar sauron-modules
-  '(sauron-erc sauron-dbus sauron-org sauron-notifications
-               sauron-twittering sauron-jabber sauron-identica sauron-elfeed
-               sauron-compilation)
+  '(sauron-erc sauron-org sauron-notifications
+     sauron-twittering sauron-mu4e sauron-jabber sauron-identica
+     sauron-elfeed)
   "List of sauron modules to use. Currently supported are:
-sauron-erc, sauron-org and sauron-dbus, sauron-twittering,
-sauron-jabber, sauron-identica, sauron-elfeed.")
+ - `sauron-compilation'
+ - `sauron-dbus'
+ - `sauron-elfeed'
+ - `sauron-erc'
+ - `sauron-identica'
+ - `sauron-jabber'
+ - `sauron-mu4e'
+ - `sauron-org'
+ - `sauron-twittering'
+ - `sauron-zeroconf'")
 
 (defvar sauron-separate-frame t
   "Show sauron in a separate frame; if set to nil (*experimental*),
@@ -660,11 +668,11 @@ sauron buffer."
   (when sr-log-buffer
     (with-current-buffer sr-log-buffer
       (save-excursion
-        (let ((lines (count-lines (point-min) (point-max)))
+	(let ((lines (count-lines (point-min) (point-max)))
 	       (inhibit-read-only t))
-          (when (> lines sauron-log-buffer-max-lines)
-            (forward-line (- sauron-log-buffer-max-lines lines))
-            (delete-region (point-min) (point))))))))
+	  (when (> lines sauron-log-buffer-max-lines)
+	    (forward-line (- sauron-log-buffer-max-lines lines))
+	    (delete-region (point-min) (point))))))))
 
 
 

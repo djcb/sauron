@@ -1,4 +1,4 @@
-## Copyright (C) 2011-2012 Dirk-Jan C. Binnema <djcb@djcbsoftware.nl>
+## Copyright (C) 2011-2017 Dirk-Jan C. Binnema <djcb@djcbsoftware.nl>
 ##
 ## This program is free software; you can redistribute it and/or modify
 ## it under the terms of the GNU General Public License as published by
@@ -17,16 +17,19 @@
 VERSION=$(shell grep "^;; Version:" sauron.el  | sed 's/^[^0-9]*//')
 EMACS=emacs
 
-FILES=	sauron.el		\
-	sauron-dbus.el		\
-	sauron-erc.el		\
-	sauron-identica.el	\
-	sauron-jabber.el	\
-	sauron-org.el		\
-	sauron-notifications.el \
+FILES=	sauron.el												\
+	sauron-compilation.el											\
+	sauron-dbus.el												\
+	sauron-erc.el												\
+	sauron-identica.el											\
+	sauron-jabber.el											\
+	sauron-org.el												\
+	sauron-notifications.el											\
+	sauron-zeroconf.el											\
 	sauron-twittering.el
 
-ELPA_FILES = $(FILES)	\
+ELPA_FILES =
+	$(FILES)												\
 	sauron-pkg.el
 
 marmalade: elpa
@@ -47,11 +50,11 @@ ELCS = $(ELS:.el=.elc)
 
 
 .el.elc:
-	$(EMACS) -batch -L . \
-                -eval "(byte-compile-disable-warning 'cl-functions)" \
-		-eval "(setq max-lisp-eval-depth 1500 max-specpdl-size 3000)" \
-		-eval "(mapc (lambda (dir) (add-to-list 'load-path dir)) (parse-colon-path (getenv \"LOAD_PATH\")))" \
-		-f batch-byte-compile $*.el
+	$(EMACS) -batch -L .											\
+	-eval "(byte-compile-disable-warning 'cl-functions)"							\
+	-eval "(setq max-lisp-eval-depth 1500 max-specpdl-size 3000)"						\
+	-eval "(mapc (lambda (dir) (add-to-list 'load-path dir)) (parse-colon-path (getenv \"LOAD_PATH\")))"	\
+	-f batch-byte-compile $*.el
 
 # i don't actually care much about byte-compiling, except for debugging...
 bytecompile: $(ELCS)
