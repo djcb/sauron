@@ -17,19 +17,19 @@
 VERSION=$(shell grep "^;; Version:" sauron.el  | sed 's/^[^0-9]*//')
 EMACS=emacs
 
-FILES=	sauron.el												\
-	sauron-compilation.el											\
-	sauron-dbus.el												\
-	sauron-erc.el												\
-	sauron-identica.el											\
-	sauron-jabber.el											\
-	sauron-org.el												\
-	sauron-notifications.el											\
-	sauron-zeroconf.el											\
-	sauron-twittering.el
+FILES=	sauron.el							\
+	sauron-compilation.el						\
+	sauron-dbus.el							\
+	sauron-erc.el							\
+	sauron-identica.el						\
+	sauron-jabber.el						\
+	sauron-notifications.el						\
+	sauron-org.el							\
+	sauron-twittering.el						\
+	sauron-zeroconf.el
 
-ELPA_FILES =
-	$(FILES)												\
+ELPA_FILES =								\
+	$(FILES)							\
 	sauron-pkg.el
 
 marmalade: elpa
@@ -50,10 +50,11 @@ ELCS = $(ELS:.el=.elc)
 
 
 .el.elc:
-	$(EMACS) -batch -L .											\
-	-eval "(byte-compile-disable-warning 'cl-functions)"							\
-	-eval "(setq max-lisp-eval-depth 1500 max-specpdl-size 3000)"						\
-	-eval "(mapc (lambda (dir) (add-to-list 'load-path dir)) (parse-colon-path (getenv \"LOAD_PATH\")))"	\
+	$(EMACS) -batch -L .						\
+	-eval "(byte-compile-disable-warning 'cl-functions)"		\
+	-eval "(setq max-lisp-eval-depth 1500 max-specpdl-size 3000)"	\
+	-eval "(mapc (lambda (dir) (add-to-list 'load-path dir))	\
+		(parse-colon-path (getenv \"LOAD_PATH\")))"		\
 	-f batch-byte-compile $*.el
 
 # i don't actually care much about byte-compiling, except for debugging...
