@@ -37,7 +37,7 @@
 
 (defun sauron-ams-org-check-org()
   "Map over org agenda entries that have a DEADLINE and aren't done."
-  ; http://orgmode.org/manual/Matching-tags-and-properties.html
+  ; API information available here: http://orgmode.org/manual/Matching-tags-and-properties.html.
   (org-map-entries #'sauron-ams-org-parse-org "DEADLINE<>\"\"-TODO=\"DONE\"-TODO=\"CANCELED\""
                    'agenda))
 
