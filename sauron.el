@@ -208,6 +208,7 @@ PROPS is a backend-specific plist.")
     (define-key map "n"               'next-line)
     (define-key map "p"               'previous-line)
     (define-key map "q"               'bury-buffer)
+    (define-key map "r"               'sauron-mark-event-handled)
     map)
   "Keymap for the sauron buffer.")
 (fset 'sauron-mode-map sauron-mode-map)
@@ -488,19 +489,27 @@ clicked line before calling sauron-activate-event."
     (beginning-of-line)
     (sauron-activate-event)))
 
+(defun sauron-mark-event-handled ()
+  "Mark the current sauron line as handled."
+  (interactive)
+  (unless (eq major-mode 'sauron-mode)
+    (error "Not in sauron mode"))
+  (let ((inhibit-read-only t))
+    ;; handled face (by default) does a strike-through of the events
+    (put-text-property (line-beginning-position) (line-end-position)
+      'face 'sauron-event-handled-face)
+    (put-text-property (line-beginning-position) (line-end-position)
+      'status 'handled))
+  (next-line))
+
 (defun sauron-activate-event ()
   "Activate the callback for the current sauron line, and remove
 any special faces from the line."
   (interactive)
   (unless (eq major-mode 'sauron-mode)
     (error "Not in sauron mode"))
-  (let* ((callback (get-text-property (point) 'callback))
-  	  (inhibit-read-only t))
-    ;; handled face (by default) does a strike-through of the events
-    (put-text-property (line-beginning-position) (line-end-position)
-      'face 'sauron-event-handled-face)
-    (put-text-property (line-beginning-position) (line-end-position)
-      'status 'handled)
+  (let ((callback (get-text-property (point) 'callback)))
+    (sauron-mark-event-handled)
     (if callback
       (funcall callback)
       (message "No callback defined for this line."))))
