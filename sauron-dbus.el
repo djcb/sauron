@@ -1,4 +1,4 @@
-;;; sauron-dbus.el --- a dbus tracking module, part of sauron
+;;; sauron-dbus.el --- a dbus tracking module, part of sauron -*-lexical-binding:t-*-
 ;;
 ;; Copyright (C) 2011 Dirk-Jan C. Binnema
 
@@ -30,7 +30,9 @@
 (defvar dbus-path-emacs nil)
 (defvar dbus-interface-introspectable nil)
 (when (not (fboundp 'dbus-unregister-service))
-  (defun dbus-unregister-service (&rest args) nil))
+  (defun dbus-unregister-service (&rest args)
+    (ignore args)
+    nil))
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defvar sauron-dbus-cookie nil
@@ -134,7 +136,7 @@ return t, otherwise, return nil."
     (concat (propertize origin 'face 'sauron-highlight2-face)
       ":" message)
     ;; pseudo closure...
-    (lexical-let ((url url))
+    (let ((url url))
       (lambda() (browse-url url)))
     `(:url ,url :origin: ,origin))
   '(:boolean t))
@@ -147,7 +149,7 @@ return t, otherwise, return nil."
     (concat (propertize origin 'face 'sauron-highlight1-face)
       ": " message)
     ;; pseudo closure...
-    (lexical-let ((msg message))
+    (let ((msg message))
       (lambda() (message "%s" msg)))
     `(:origin origin))
   '(:boolean t))
