@@ -343,7 +343,7 @@ DBUS_SESSION_BUS_ADDRESS="`cat ~/.sauron-dbus`" dbus-send ....
 *** notifications
 
     sauron-notifications tracks notifications sent using `notifications-notify',
-    which was added in the (not yet released) emacs 24. You can use
+    which was added in emacs 24. You can use
     `sauron-notifications-urgency-to-priority-plist' for the mapping of the
     'urgency' field of notification to the sauron's priority field.
 
