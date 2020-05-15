@@ -43,6 +43,9 @@ element is an org-mode heading priority.")
 (defvar sauron-org--refresh-timer nil
   "Timer that rebuilds the list of org headings we're tracking.")
 
+(defvar sauron-org--time-hour-regexp "<\\([^>]+[0-9]\\{1,2\\}:[0-9]\\{2\\}[0-9+:hdwmy/ 	.-]*\\)>"
+  "Matches timestamps with an explicitly set hour. Extracted from org-deadline-time-hour-regexp.")
+
 (defun sauron-org-add-timers (heading time)
   "Add a timer for every time interval."
   (remove-if #'null
@@ -58,12 +61,20 @@ element is an org-mode heading priority.")
                           (sauron-add-event 'org priority heading))))))
               sauron-prio-org-minutes-left-list)))
 
+(defun sauron-org-maybe-string-to-time (str)
+  "If STR is a timestamp with an hour component, return the parsed string. Return NIL otherwise."
+  (if (and str (string-match sauron-org--time-hour-regexp str))
+      (org-time-string-to-time str)))
+
 (defun sauron-org-maybe-add-heading ()
   "Add heading at point if it is scheduled or has a deadline."
-  (let ((heading (org-get-heading))
-        (scheduled (org-get-scheduled-time (point)))
-        (deadline (org-get-deadline-time (point))))
-    (if (and scheduled (time-less-p nil scheduled))
+  (let* ((heading (org-get-heading))
+         (scheduled-string (org-entry-get (point) "SCHEDULED"))
+         (deadline-string (org-entry-get (point) "DEADLINE"))
+         (scheduled (sauron-org-maybe-string-to-time scheduled-string))
+         (deadline (sauron-org-maybe-string-to-time deadline-string)))
+    (if (and scheduled
+             (time-less-p nil scheduled))
         (cl-pushnew
          `(:heading ,heading
            :time ,scheduled
@@ -71,7 +82,8 @@ element is an org-mode heading priority.")
            :timers ,(sauron-org-add-timers heading scheduled))
           sauron-org--heading-list))
 
-    (if (and deadline (time-less-p nil deadline))
+    (if (and deadline
+             (time-less-p nil deadline))
         (cl-pushnew
          `(:heading ,heading
            :time ,deadline
