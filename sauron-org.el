@@ -113,7 +113,7 @@ element is an org-mode heading priority.")
 (defun sauron-org--clear-heading-list ()
   "Cancel all the timers in the heading list and set it to nil."
   (dolist (heading sauron-org--heading-list)
-    (mapcar #'cancel-timer (plist-get heading :timers)))
+    (mapc #'cancel-timer (plist-get heading :timers)))
 
   (setq sauron-org--heading-list '()))
 
