@@ -37,6 +37,15 @@ element is an org-mode heading priority.")
 (defvar sauron-org-refresh-interval 5
   "Length of time between rebuilding the heading list specified in minutes.")
 
+(defvar sauron-org-print-todo-keyword t
+  "Include the todo keyword when sending the heading to sauron.")
+
+(defvar sauron-org-print-tags nil
+  "Include the tags when sending the heading to sauron.")
+
+(defvar sauron-org-print-priority t
+  "Include the priority cookie when sending the heading to sauron.")
+
 (defvar sauron-org--heading-list '()
   "List of headings that sauron-org is currently tracking.")
 
@@ -69,7 +78,10 @@ element is an org-mode heading priority.")
 (defun sauron-org-maybe-add-heading ()
   "Add heading at point if it is scheduled, has a deadline, and isn't done."
   (unless (org-entry-is-done-p)
-    (let* ((heading (org-get-heading))
+    (let* ((heading (org-get-heading
+                     (not sauron-org-print-tags)
+                     (not sauron-org-print-todo-keyword)
+                     (not sauron-org-print-priority)))
            (scheduled-string (org-entry-get (point) "SCHEDULED"))
            (deadline-string (org-entry-get (point) "DEADLINE"))
            (scheduled (sauron-org-maybe-string-to-time scheduled-string))
