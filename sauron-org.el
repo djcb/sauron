@@ -46,6 +46,9 @@ element is an org-mode heading priority.")
 (defvar sauron-org-print-priority t
   "Include the priority cookie when sending the heading to sauron.")
 
+(defvar sauron-org-exclude-tags (list org-archive-tag)
+  "Headings with any of these tags will be excluded from tracking.")
+
 (defvar sauron-org--heading-list '()
   "List of headings that sauron-org is currently tracking.")
 
@@ -77,7 +80,9 @@ element is an org-mode heading priority.")
 
 (defun sauron-org-maybe-add-heading ()
   "Add heading at point if it is scheduled, has a deadline, and isn't done."
-  (unless (org-entry-is-done-p)
+  (unless (or (org-entry-is-done-p)
+              (cl-some (lambda (tag) (member tag sauron-org-exclude-tags))
+                       (org-get-tags nil t)))
     (let* ((heading (org-get-heading
                      (not sauron-org-print-tags)
                      (not sauron-org-print-todo-keyword)
