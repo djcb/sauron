@@ -49,6 +49,9 @@ element is an org-mode heading priority.")
 (defvar sauron-org-exclude-tags (list org-archive-tag)
   "Headings with any of these tags will be excluded from tracking.")
 
+(defvar sauron-org-heading-formatting-function #'sauron-org-default-heading-formatter
+  "Function to apply to a heading before it's sent to a sauron event.")
+
 (defvar sauron-org--heading-list '()
   "List of headings that sauron-org is currently tracking.")
 
@@ -57,6 +60,17 @@ element is an org-mode heading priority.")
 
 (defvar sauron-org--time-hour-regexp "<\\([^>]+[0-9]\\{1,2\\}:[0-9]\\{2\\}[0-9+:hdwmy/ 	.-]*\\)>"
   "Matches timestamps with an explicitly set hour. Extracted from org-deadline-time-hour-regexp.")
+
+(defun sauron-org-default-heading-formatter (heading type time)
+  "Default formatter for tracked headings."
+  (let ((plan-phrase (cond ((eq type 'scheduled) "is scheduled")
+                           ((eq type 'deadline) "has a deadline")
+                           (t "@")))
+        (minutes-from-now (round
+                            (/ (- (time-to-seconds time)
+                                  (time-to-seconds))
+                              60))))
+    (format "%s %s %d minutes from now" heading plan-phrase minutes-from-now)))
 
 (defun sauron-org-add-timers (heading time props)
   "Add a timer for every time interval."
@@ -70,7 +84,10 @@ element is an org-mode heading priority.")
                   (if (time-less-p nil target-time)
                       (run-at-time target-time nil
                         (lambda ()
-                          (sauron-add-event 'org priority heading
+                          (sauron-add-event 'org priority (funcall #'sauron-org-default-heading-formatter
+                                                                   heading
+                                                                   (plist-get props :type)
+                                                                   time)
                                             nil props))))))
               sauron-prio-org-minutes-left-list)))
 
