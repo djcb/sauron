@@ -67,29 +67,30 @@ element is an org-mode heading priority.")
       (org-time-string-to-time str)))
 
 (defun sauron-org-maybe-add-heading ()
-  "Add heading at point if it is scheduled or has a deadline."
-  (let* ((heading (org-get-heading))
-         (scheduled-string (org-entry-get (point) "SCHEDULED"))
-         (deadline-string (org-entry-get (point) "DEADLINE"))
-         (scheduled (sauron-org-maybe-string-to-time scheduled-string))
-         (deadline (sauron-org-maybe-string-to-time deadline-string)))
-    (if (and scheduled
-             (time-less-p nil scheduled))
-        (cl-pushnew
-         `(:heading ,heading
-           :time ,scheduled
-           :type :scheduled
-           :timers ,(sauron-org-add-timers heading scheduled))
-          sauron-org--heading-list))
+  "Add heading at point if it is scheduled, has a deadline, and isn't done."
+  (unless (org-entry-is-done-p)
+    (let* ((heading (org-get-heading))
+           (scheduled-string (org-entry-get (point) "SCHEDULED"))
+           (deadline-string (org-entry-get (point) "DEADLINE"))
+           (scheduled (sauron-org-maybe-string-to-time scheduled-string))
+           (deadline (sauron-org-maybe-string-to-time deadline-string)))
+      (if (and scheduled
+               (time-less-p nil scheduled))
+          (cl-pushnew
+            `(:heading ,heading
+              :time ,scheduled
+              :type :scheduled
+              :timers ,(sauron-org-add-timers heading scheduled))
+            sauron-org--heading-list))
 
-    (if (and deadline
-             (time-less-p nil deadline))
-        (cl-pushnew
-         `(:heading ,heading
-           :time ,deadline
-           :type :deadline
-           :timers ,(sauron-org-add-timers heading deadline))
-          sauron-org--heading-list))))
+      (if (and deadline
+               (time-less-p nil deadline))
+          (cl-pushnew
+            `(:heading ,heading
+              :time ,deadline
+              :type :deadline
+              :timers ,(sauron-org-add-timers heading deadline))
+            sauron-org--heading-list)))))
 
 (defun sauron-org--clear-heading-list ()
   "Cancel all the timers in the heading list and set it to nil."
