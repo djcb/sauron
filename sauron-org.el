@@ -58,7 +58,7 @@ element is an org-mode heading priority.")
 (defvar sauron-org--time-hour-regexp "<\\([^>]+[0-9]\\{1,2\\}:[0-9]\\{2\\}[0-9+:hdwmy/ 	.-]*\\)>"
   "Matches timestamps with an explicitly set hour. Extracted from org-deadline-time-hour-regexp.")
 
-(defun sauron-org-add-timers (heading time type)
+(defun sauron-org-add-timers (heading time props)
   "Add a timer for every time interval."
   (remove-if #'null
              (mapcar
@@ -71,7 +71,7 @@ element is an org-mode heading priority.")
                       (run-at-time target-time nil
                         (lambda ()
                           (sauron-add-event 'org priority heading
-                                            nil (list :type type)))))))
+                                            nil props))))))
               sauron-prio-org-minutes-left-list)))
 
 (defun sauron-org-maybe-string-to-time (str)
@@ -98,7 +98,8 @@ element is an org-mode heading priority.")
             `(:heading ,heading
               :time ,scheduled
               :type 'scheduled
-              :timers ,(sauron-org-add-timers heading scheduled 'scheduled))
+              :timers ,(sauron-org-add-timers heading scheduled
+                                              (list :type 'scheduled :time scheduled)))
             sauron-org--heading-list))
 
       (if (and deadline
@@ -107,7 +108,8 @@ element is an org-mode heading priority.")
             `(:heading ,heading
               :time ,deadline
               :type 'deadline
-              :timers ,(sauron-org-add-timers heading deadline 'deadline))
+              :timers ,(sauron-org-add-timers heading deadline
+                                              (list :type 'deadline :time deadline)))
             sauron-org--heading-list)))))
 
 (defun sauron-org--clear-heading-list ()
