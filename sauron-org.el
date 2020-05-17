@@ -5,8 +5,8 @@
 ;; Author: Jake Coble <http://github/jakecoble>
 ;; Maintainer: Jake Coble <j@kecoble.com>
 ;; Created: May 14, 2020
-;; Modified: May 14, 2020
-;; Version: 0.0.1
+;; Modified: May 16, 2020
+;; Version: 0.0.2
 ;; Keywords:
 ;; Homepage: https://github.com/jakecoble/sauron-org
 ;; Package-Requires: ((emacs "26.3") (cl-lib "0.5"))
