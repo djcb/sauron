@@ -62,17 +62,19 @@ urgency (notifications)."
       (ad-deactivate 'notifications-notify))))
 
 (defadvice notifications-notify
-  (after sr-notifications-hook (&rest params) disable)
+    (after sr-notifications-hook (&rest params) disable)
   "\"Hook\" `sauron-add-event' to `notifications-notify'"
   (let ((title (plist-get params :title))
         (body (plist-get params :body))
         (prio (sr-notifications-urgency-to-priority
-               (plist-get params :urgency))))
+               (plist-get params :urgency)))
+        (callback (plist-get params :on-action)))
     (sauron-add-event
-      'notify
-      prio
-      (concat title
-	(if (and title body) " - ") body))))
+     'notify
+     prio
+     (concat title
+	         (if (and title body) " - ") body)
+     callback)))
 
 (provide 'sauron-notifications)
 
