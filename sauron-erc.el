@@ -56,7 +56,7 @@ The following events are erc-track
 
 (defun sauron-erc-start ()
   "Start watching ERC."
-  (if (not (boundp 'erc-version-string))
+  (if (not (fboundp 'erc-version))
     (progn
       (message "sauron-erc not available")
       nil)
