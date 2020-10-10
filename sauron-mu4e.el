@@ -23,7 +23,7 @@
 
 ;;; Code:
 
-(require 'mu4e)
+(require 'mu4e nil 'noerror) ;; keep errors out if mu4e is not there
 
 (defvar sauron-mu4e-priority 3
   "MU4E default-priority.")
