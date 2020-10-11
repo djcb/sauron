@@ -5,8 +5,8 @@
 ;; Author: Jake Coble <http://github/jakecoble>
 ;; Maintainer: Jake Coble <j@kecoble.com>
 ;; Created: May 14, 2020
-;; Modified: May 14, 2020
-;; Version: 0.0.1
+;; Modified: May 16, 2020
+;; Version: 0.0.2
 ;; Keywords:
 ;; Homepage: https://github.com/jakecoble/sauron-org
 ;; Package-Requires: ((emacs "26.3") (cl-lib "0.5"))
@@ -37,6 +37,21 @@ element is an org-mode heading priority.")
 (defvar sauron-org-refresh-interval 5
   "Length of time between rebuilding the heading list specified in minutes.")
 
+(defvar sauron-org-print-todo-keyword t
+  "Include the todo keyword when sending the heading to sauron.")
+
+(defvar sauron-org-print-tags nil
+  "Include the tags when sending the heading to sauron.")
+
+(defvar sauron-org-print-priority t
+  "Include the priority cookie when sending the heading to sauron.")
+
+(defvar sauron-org-exclude-tags (list org-archive-tag)
+  "Headings with any of these tags will be excluded from tracking.")
+
+(defvar sauron-org-heading-formatting-function #'sauron-org-default-heading-formatter
+  "Function to apply to a heading before it's sent to a sauron event.")
+
 (defvar sauron-org--heading-list '()
   "List of headings that sauron-org is currently tracking.")
 
@@ -46,7 +61,18 @@ element is an org-mode heading priority.")
 (defvar sauron-org--time-hour-regexp "<\\([^>]+[0-9]\\{1,2\\}:[0-9]\\{2\\}[0-9+:hdwmy/ 	.-]*\\)>"
   "Matches timestamps with an explicitly set hour. Extracted from org-deadline-time-hour-regexp.")
 
-(defun sauron-org-add-timers (heading time)
+(defun sauron-org-default-heading-formatter (heading type time)
+  "Default formatter for tracked headings."
+  (let ((plan-phrase (cond ((eq type 'scheduled) "is scheduled")
+                           ((eq type 'deadline) "has a deadline")
+                           (t "@")))
+        (minutes-from-now (round
+                            (/ (- (time-to-seconds time)
+                                  (time-to-seconds))
+                              60))))
+    (format "%s %s %d minutes from now" heading plan-phrase minutes-from-now)))
+
+(defun sauron-org-add-timers (heading time props)
   "Add a timer for every time interval."
   (remove-if #'null
              (mapcar
@@ -58,7 +84,11 @@ element is an org-mode heading priority.")
                   (if (time-less-p nil target-time)
                       (run-at-time target-time nil
                         (lambda ()
-                          (sauron-add-event 'org priority heading))))))
+                          (sauron-add-event 'org priority (funcall #'sauron-org-default-heading-formatter
+                                                                   heading
+                                                                   (plist-get props :type)
+                                                                   time)
+                                            nil props))))))
               sauron-prio-org-minutes-left-list)))
 
 (defun sauron-org-maybe-string-to-time (str)
@@ -67,34 +97,42 @@ element is an org-mode heading priority.")
       (org-time-string-to-time str)))
 
 (defun sauron-org-maybe-add-heading ()
-  "Add heading at point if it is scheduled or has a deadline."
-  (let* ((heading (org-get-heading))
-         (scheduled-string (org-entry-get (point) "SCHEDULED"))
-         (deadline-string (org-entry-get (point) "DEADLINE"))
-         (scheduled (sauron-org-maybe-string-to-time scheduled-string))
-         (deadline (sauron-org-maybe-string-to-time deadline-string)))
-    (if (and scheduled
-             (time-less-p nil scheduled))
-        (cl-pushnew
-         `(:heading ,heading
-           :time ,scheduled
-           :type :scheduled
-           :timers ,(sauron-org-add-timers heading scheduled))
-          sauron-org--heading-list))
+  "Add heading at point if it is scheduled, has a deadline, and isn't done."
+  (unless (or (org-entry-is-done-p)
+              (cl-some (lambda (tag) (member tag sauron-org-exclude-tags))
+                       (org-get-tags nil t)))
+    (let* ((heading (org-get-heading
+                     (not sauron-org-print-tags)
+                     (not sauron-org-print-todo-keyword)
+                     (not sauron-org-print-priority)))
+           (scheduled-string (org-entry-get (point) "SCHEDULED"))
+           (deadline-string (org-entry-get (point) "DEADLINE"))
+           (scheduled (sauron-org-maybe-string-to-time scheduled-string))
+           (deadline (sauron-org-maybe-string-to-time deadline-string)))
+      (if (and scheduled
+               (time-less-p nil scheduled))
+          (cl-pushnew
+            `(:heading ,heading
+              :time ,scheduled
+              :type 'scheduled
+              :timers ,(sauron-org-add-timers heading scheduled
+                                              (list :type 'scheduled :time scheduled)))
+            sauron-org--heading-list))
 
-    (if (and deadline
-             (time-less-p nil deadline))
-        (cl-pushnew
-         `(:heading ,heading
-           :time ,deadline
-           :type :deadline
-           :timers ,(sauron-org-add-timers heading deadline))
-          sauron-org--heading-list))))
+      (if (and deadline
+               (time-less-p nil deadline))
+          (cl-pushnew
+            `(:heading ,heading
+              :time ,deadline
+              :type 'deadline
+              :timers ,(sauron-org-add-timers heading deadline
+                                              (list :type 'deadline :time deadline)))
+            sauron-org--heading-list)))))
 
 (defun sauron-org--clear-heading-list ()
   "Cancel all the timers in the heading list and set it to nil."
   (dolist (heading sauron-org--heading-list)
-    (mapcar #'cancel-timer (plist-get heading :timers)))
+    (mapc #'cancel-timer (plist-get heading :timers)))
 
   (setq sauron-org--heading-list '()))
 
