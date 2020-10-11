@@ -25,6 +25,7 @@ FILES=	sauron.el							\
 	sauron-jabber.el						\
 	sauron-notifications.el						\
 	sauron-org.el							\
+	sauron-ams-org.el						\
 	sauron-twittering.el						\
 	sauron-zeroconf.el
 

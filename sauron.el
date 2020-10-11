@@ -40,7 +40,7 @@
 (defvar sauron-modules
   '(sauron-erc sauron-org sauron-notifications
      sauron-twittering sauron-mu4e sauron-jabber sauron-identica
-     sauron-elfeed)
+     sauron-elfeed sauron-ams-org)
   "List of sauron modules to use. Currently supported are:
  - `sauron-compilation'
  - `sauron-dbus'
@@ -50,6 +50,7 @@
  - `sauron-jabber'
  - `sauron-mu4e'
  - `sauron-org'
+ - `sauron-ams-org'
  - `sauron-twittering'
  - `sauron-zeroconf'")
 
