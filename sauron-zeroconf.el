@@ -1,4 +1,4 @@
-;;; sauron-zeroconf.el -- a ZEROCONF traking module, part of sauron
+;;; sauron-zeroconf.el -- a ZEROCONF tracking module, part of sauron
 
 ;; Copyright (C) 2016 Zachary Allison <zack@zackallison.com>
 
@@ -39,43 +39,68 @@
 (defvar sauron-zeroconf-service-map
   #s(hash-table size 100 test equal rehash-size 1.5 rehash-threshold 0.8
                 data ("_MacOSXDupSuppress._tcp" "MacOS X Duplicate Machine Suppression"
-                      "_appletv-v2._tcp" "Apple TV (V2)"
+                      " _wd-2go._tcp" "Western Digital 2Go"
                       "_acrobatSRV._tcp" "Adobe Acrobat"
+                      "_adb._tcp.local" "Android TV"
                       "_adisk._tcp" "Apple TimeMachine"
                       "_adobe-vc._tcp" "Adobe Version Cue"
                       "_afpovertcp._tcp" "Apple File Sharing"
                       "_airplay._tcp" "Apple AirPlay"
                       "_airport._tcp" "Apple AirPort"
+                      "_amzn-wplay._tcp" "Amazon Fire TV"
+                      "_androidtvremote._tcp" "Android TV Remote"
+                      "_appletv-v2._tcp" "Apple TV (V2)"
                       "_apt._tcp" "APT Package Repository"
+                      "_apt_proxy._tcp" "APT Proxy"
+                      "_arlo-video._tcp" "Arlo Video"
                       "_bzr._tcp" "Bazaar"
+                      "_canon-bjnp1._tcp" "Canon Printer"
                       "_daap._tcp" "iTunes Audio Access"
                       "_dacp._tcp" "iTunes Remote Control"
                       "_device-info._tcp" "Device Info"
                       "_distcc._tcp" "Distributed Compiler"
+                      "_dkapi._tcp" "Daikin"
                       "_domain._udp" "DNS Server"
                       "_dpap._tcp" "Digital Photo Sharing"
+                      "_dyson_mqtt._tcp" "Dyson Air Filter"
+                      "_ecobee._tcp" "Ecobee Smart Thermostat"
+                      "_esphomelib._tcp" "Sonoff ESP Home"
                       "_ftp._tcp" "FTP File Transfer"
+                      "_googlecast._tcp" "Google Cast"
+                      "_googlerpc._tcp" "Google Cast"
+                      "_googlezone._tcp" "Google Cast"
                       "_h323._tcp" "H.323 Telephony"
+                      "_hap._tcp" "Home Automation"
                       "_home-sharing._tcp" "Apple Home Sharing"
                       "_http-alt._tcp" "Alternative Web Site"
                       "_http._tcp" "Web Site"
                       "_https._tcp" "Secure Web Site"
+                      "_hue._tcp" "Phillips Hue"
                       "_iax._udp" "Asterisk Exchange"
                       "_imap._tcp" "IMAP Mail Access"
                       "_ipp._tcp" "Internet Printer"
+                      "_ipps._tcp" "Secure Internet Printer"
                       "_ksysguard._tcp" "KDE System Guard"
                       "_ldap._tcp" "LDAP Directory Server"
                       "_libvirt._tcp" "Virtual Machine Manager"
                       "_lobby._tcp" "Gobby Collaborative Editor Session"
+                      "_lutron._tcp" "Caseta Smart Bridge"
+                      "_miio._udp" "Xiaomi Mi Product Line"
                       "_mpd._tcp" "Music Player Daemon"
                       "_mumble._tcp" "Mumble Server"
+                      "_nanoleafapi._tcp" "Nanoleaf"
+                      "_nanoleafms._tcp" "Nanoleaf"
                       "_net-assistant._udp" "Apple Net Assistant"
                       "_nfs._tcp" "Network File System"
                       "_ntp._udp" "NTP Time Server"
+                      "_nut._tcp" "Network UPS Tools"
+                      "_nv_shield_remote._tcp" "NVidia Shield"
+                      "_octoprint._tcp" "Octoprint"
                       "_odisk._tcp" "DVD or CD Sharing"
                       "_omni-bookmark._tcp" "OmniWeb Bookmark Sharing"
                       "_pdl-datastream._tcp" "PDL Printer"
                       "_pgpkey-hkp._tcp" "GnuPG/PGP HKP Key Server"
+                      "_philipstv_rpc._tcp" "Phillips TV"
                       "_pop3._tcp" "Posta - POP3"
                       "_postgresql._tcp" "PostgreSQL Server"
                       "_presence._tcp" "iChat Presence"
@@ -101,6 +126,9 @@
                       "_sip._udp" "SIP Telephony"
                       "_skype._tcp" "Skype VoIP"
                       "_smb._tcp" "Microsoft Windows Network"
+                      "_sonos._tcp" "Sonos"
+                      "_soundtouch._tcp" "Bose"
+                      "_spotify-connect._tcp" "Spotify Connect"
                       "_ssh._tcp" "SSH Remote Terminal"
                       "_svn._tcp" "Subversion Revision Control"
                       "_telnet._tcp" "Telnet Remote Terminal"
@@ -112,9 +140,14 @@
                       "_tp._tcp" "Thousand Parsec Server"
                       "_tps._tcp" "Thousand Parsec Server (Secure)"
                       "_udisks-ssh._tcp" "Remote Disk Management"
+                      "_viziocast._tcp" "Visio"
                       "_vlc-http._tcp" "VLC Streaming"
                       "_webdav._tcp" "WebDAV File Share"
                       "_webdavs._tcp" "Secure WebDAV File Share"
+                      "_wled._tcp" "WLED"
+                      "_xbmc-events._udp" "Kodi / XBMC"
+                      "_xbmc-jsonrpc-h._tcp" "Kodi / XBMC"
+                      "_xbmc-jsonrpc._tcp"  "Kodi / XBMC"
                       "_workstation._tcp" "Workstation"))
   "Mapping to friendly names of services.")
 
@@ -167,27 +200,25 @@
             (aproto (zeroconf-service-aprotocol service))
             (interface (zeroconf-service-interface service))
             (host (zeroconf-service-host service))
-	    (link (sauron-zeroconf-make-link service)))
+            (link (sauron-zeroconf-make-link service)))
          (lambda ()
            (sauron-zeroconf-details type host txt address
                                     port name flags proto aproto
                                     interface link))))))
+
 
 (defun sauron-zeroconf-make-link (service)
   "Attempt to make an URL for the advertised service"
   (cond
    ;; HTTP links
    ((or (string-equal (zeroconf-service-type service) "_http._tcp")
-	(string-equal (zeroconf-service-type service) "_http-alt._tcp"))
+        (string-equal (zeroconf-service-type service) "_http-alt._tcp"))
     (concat "http://" (zeroconf-service-host service) ":" (format "%s" (zeroconf-service-port service))))
    ;; HTTPS links
    ((or (string-equal (zeroconf-service-type service) "_https._tcp"))
     (concat "https://" (zeroconf-service-host service) ":" (format "%s" (zeroconf-service-port service))))))
-	
-    
-	
-    
-  
+
+
 (defun sauron-zeroconf-details (type host txt address
                                      port name flags proto aproto
                                      interface link)
@@ -199,7 +230,7 @@
                  "\n")
          (concat "host:\t" (propertize (or host "") 'face 'font-lock-keyword-face)
                  " [" address "]" "\n")
-	 (if link (concat "link:\t" (propertize (or link "") 'face 'font-lock-variable-name-face) "\n" ) "")
+         (if link (concat "link:\t" (propertize (or link "") 'face 'font-lock-variable-name-face) "\n" ) "")
          (concat "type:\t"
                  (propertize
                   (if (gethash (format "%s" type)
@@ -240,10 +271,10 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defun sauron-zeroconf-start ()
   "Initialize zeroconf."
-  (zeroconf-init)  
+  (zeroconf-init)
   (sauron-zeroconf-read-service-map)
   (advice-add 'zeroconf-service-browser-handler :before
-	      #'sauron-zeroconf-handler))
+              #'sauron-zeroconf-handler))
 
 (defun sauron-zeroconf-stop ()
   "Stop zeroconf."
