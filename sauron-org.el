@@ -49,6 +49,9 @@ element is an org-mode heading priority.")
 (defvar sauron-org-exclude-tags (list org-archive-tag)
   "Headings with any of these tags will be excluded from tracking.")
 
+(defvar sauron-org-exclude-todo-states '()
+  "Headings with any of these todo state keywords will be excluded from tracking.")
+
 (defvar sauron-org-heading-formatting-function #'sauron-org-default-heading-formatter
   "Function to apply to a heading before it's sent to a sauron event.")
 
@@ -99,6 +102,7 @@ element is an org-mode heading priority.")
 (defun sauron-org-maybe-add-heading ()
   "Add heading at point if it is scheduled, has a deadline, and isn't done."
   (unless (or (org-entry-is-done-p)
+              (member (org-get-todo-state) sauron-org-exclude-todo-states)
               (cl-some (lambda (tag) (member tag sauron-org-exclude-tags))
                        (org-get-tags nil t)))
     (let* ((heading (org-get-heading
